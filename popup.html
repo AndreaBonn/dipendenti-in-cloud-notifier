@@ -1,33 +1,33 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
+  <head>
+    <title>Stato Timbratura</title>
+    <meta charset="UTF-8" />
+    <link rel="stylesheet" href="popup.css" />
+  </head>
 
-<head>
-  <title>Stato Timbratura</title>
-  <meta charset="UTF-8">
-  <link rel="stylesheet" href="popup.css">
-</head>
-
-<body>
-  <h3>Stato Timbratura</h3>
-  <div class="disclaimer-small">Estensione non ufficiale</div>
-  <div id="loading" class="loading">Caricamento...</div>
-  <div id="error" class="error" style="display: none;"></div>
-  <div id="status-container" style="display: none;">
-    <div id="status" class="status">
-      <div id="status-icon" class="status-icon"></div>
-      <div id="status-text" class="status-text"></div>
+  <body>
+    <h3>Stato Timbratura</h3>
+    <div class="disclaimer-small">Estensione non ufficiale</div>
+    <div id="loading" class="loading">Caricamento...</div>
+    <div id="error" class="error" style="display: none"></div>
+    <div id="status-container" style="display: none">
+      <div id="status" class="status">
+        <div id="status-icon" class="status-icon"></div>
+        <div id="status-text" class="status-text"></div>
+      </div>
+      <div id="countdown" class="countdown"></div>
+      <div id="time" class="time"></div>
+      <div id="storico-section" class="storico-section" style="display: none">
+        <div class="storico-title">📋 Timbrature di oggi</div>
+        <div id="storico-list" class="storico-list"></div>
+      </div>
+      <button id="mute-notification" class="button-mute" style="display: none">
+        🔕 Silenzia Notifica
+      </button>
+      <a id="open-site" class="button" href="#" target="_blank">🌐 Apri Dipendenti in Cloud</a>
+      <a id="open-options" class="button secondary" href="#">⚙️ Opzioni</a>
     </div>
-    <div id="countdown" class="countdown"></div>
-    <div id="time" class="time"></div>
-    <div id="storico-section" class="storico-section" style="display: none;">
-      <div class="storico-title">📋 Timbrature di oggi</div>
-      <div id="storico-list" class="storico-list"></div>
-    </div>
-    <button id="mute-notification" class="button-mute" style="display: none;">🔕 Silenzia Notifica</button>
-    <a id="open-site" class="button" href="#" target="_blank">🌐 Apri Dipendenti in Cloud</a>
-    <a id="open-options" class="button secondary" href="#">⚙️ Opzioni</a>
-  </div>
-  <script src="popup.js"></script>
-</body>
-
+    <script src="popup.js"></script>
+  </body>
 </html>

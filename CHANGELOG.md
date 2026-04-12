@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [2.0.0] - 2024-12-01
 
 ### Added
+
 - Real-time time-clock status detection (clocked in/out)
 - Dynamic extension icon (green/red/gray with blinking alerts)
 - Badge countdown to next clock event
@@ -23,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Options page with full configuration UI
 
 ### Security
+
 - Content Security Policy declared in manifest
 - Safe DOM manipulation (no innerHTML with dynamic data)
 - Conditional debug logging (disabled in production)
@@ -30,5 +32,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.0.0] - 2024-11-01
 
 ### Added
+
 - Initial release with basic time-clock monitoring
 - Simple icon state changes

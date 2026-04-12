@@ -1,5 +1,7 @@
 const DEBUG = false;
-function log(...args) { if (DEBUG) console.log(...args); }
+function log(...args) {
+  if (DEBUG) console.log(...args);
+}
 
 // Timing constants
 const SOUND_REPEAT_MS = 5 * 60 * 1000;
@@ -20,40 +22,36 @@ let lastSoundTime = null;
 
 // Variabili per gestire le notifiche
 let notificationsSent = {};
-let workSchedule = {
+const workSchedule = {
   morningStart: 9 * 60,
   lunchEnd: 13 * 60,
   afternoonStart: 14 * 60,
-  eveningEnd: 18 * 60
+  eveningEnd: 18 * 60,
 };
 
 // Funzione per caricare gli orari personalizzati
 function loadWorkSchedule(callback) {
-  chrome.storage.local.get({
-    morningStart: '09:00',
-    lunchEnd: '13:00',
-    afternoonStart: '14:00',
-    eveningEnd: '18:00'
-  }, function (items) {
-    workSchedule.morningStart = timeToMinutes(items.morningStart);
-    workSchedule.lunchEnd = timeToMinutes(items.lunchEnd);
-    workSchedule.afternoonStart = timeToMinutes(items.afternoonStart);
-    workSchedule.eveningEnd = timeToMinutes(items.eveningEnd);
-    if (callback) callback();
-  });
+  chrome.storage.local.get(
+    {
+      morningStart: '09:00',
+      lunchEnd: '13:00',
+      afternoonStart: '14:00',
+      eveningEnd: '18:00',
+    },
+    function (items) {
+      workSchedule.morningStart = timeToMinutes(items.morningStart);
+      workSchedule.lunchEnd = timeToMinutes(items.lunchEnd);
+      workSchedule.afternoonStart = timeToMinutes(items.afternoonStart);
+      workSchedule.eveningEnd = timeToMinutes(items.eveningEnd);
+      if (callback) callback();
+    }
+  );
 }
 
 // Converte HH:MM in minuti
 function timeToMinutes(timeStr) {
   const [hours, minutes] = timeStr.split(':').map(Number);
   return hours * 60 + minutes;
-}
-
-// Converte minuti in HH:MM
-function minutesToTime(minutes) {
-  const hours = Math.floor(minutes / 60);
-  const mins = minutes % 60;
-  return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
 }
 
 // Funzione per inviare notifica desktop
@@ -67,19 +65,23 @@ function sendNotification(title, message, urgent = false) {
       title: title,
       message: message,
       priority: urgent ? 2 : 1,
-      requireInteraction: urgent
+      requireInteraction: urgent,
     };
 
-    chrome.notifications.create('timbratura-' + Date.now(), notificationOptions, function (notificationId) {
-      log('[Notifica] Inviata:', title);
+    chrome.notifications.create(
+      'timbratura-' + Date.now(),
+      notificationOptions,
+      function (notificationId) {
+        log('[Notifica] Inviata:', title);
 
-      // Auto-chiudi dopo 10 secondi se non urgente
-      if (!urgent) {
-        setTimeout(() => {
-          chrome.notifications.clear(notificationId);
-        }, NOTIFICATION_AUTO_CLOSE_MS);
+        // Auto-chiudi dopo 10 secondi se non urgente
+        if (!urgent) {
+          setTimeout(() => {
+            chrome.notifications.clear(notificationId);
+          }, NOTIFICATION_AUTO_CLOSE_MS);
+        }
       }
-    });
+    );
   });
 }
 
@@ -94,20 +96,20 @@ chrome.notifications.onClicked.addListener(function (notificationId) {
 function setIcon(state) {
   const icons = {
     green: {
-      "16": "images/timer-green-16.png",
-      "48": "images/timer-green-48.png",
-      "128": "images/timer-green-128.png"
+      16: 'images/timer-green-16.png',
+      48: 'images/timer-green-48.png',
+      128: 'images/timer-green-128.png',
     },
     red: {
-      "16": "images/timer-red-16.png",
-      "48": "images/timer-red-48.png",
-      "128": "images/timer-red-128.png"
+      16: 'images/timer-red-16.png',
+      48: 'images/timer-red-48.png',
+      128: 'images/timer-red-128.png',
     },
     na: {
-      "16": "images/timer-na-16.png",
-      "48": "images/timer-na-48.png",
-      "128": "images/timer-na-128.png"
-    }
+      16: 'images/timer-na-16.png',
+      48: 'images/timer-na-48.png',
+      128: 'images/timer-na-128.png',
+    },
   };
 
   chrome.action.setIcon({ path: icons[state] || icons.na });
@@ -117,7 +119,7 @@ function setIcon(state) {
   const badgeColors = {
     green: '#28a745',
     red: '#dc3545',
-    na: '#6c757d'
+    na: '#6c757d',
   };
   chrome.action.setBadgeBackgroundColor({ color: badgeColors[state] || badgeColors.na });
 }
@@ -184,37 +186,43 @@ function updateBadgeCountdown(isTimbrato) {
 // Funzione per riprodurre il suono di notifica
 function playNotificationSound() {
   // Verifica se i suoni sono abilitati
-  chrome.storage.local.get({
-    enableSound: true,
-    soundType: 'classic',
-    soundVolume: 50
-  }, function(options) {
-    if (!options.enableSound) return;
-    
-    const volume = options.soundVolume / 100; // Converti in 0-1
-    
-    // Creiamo un offscreen document per riprodurre l'audio
-    chrome.offscreen.createDocument({
-      url: 'offscreen.html',
-      reasons: ['AUDIO_PLAYBACK'],
-      justification: 'Riproduzione suono di notifica per timbratura mancante'
-    }).then(() => {
-      chrome.runtime.sendMessage({ 
-        action: 'playSound',
-        soundType: options.soundType,
-        volume: volume
-      });
-    }).catch((error) => {
-      // Se il documento esiste già, inviamo solo il messaggio
-      if (error.message.includes('Only a single offscreen')) {
-        chrome.runtime.sendMessage({ 
-          action: 'playSound',
-          soundType: options.soundType,
-          volume: volume
+  chrome.storage.local.get(
+    {
+      enableSound: true,
+      soundType: 'classic',
+      soundVolume: 50,
+    },
+    function (options) {
+      if (!options.enableSound) return;
+
+      const volume = options.soundVolume / 100; // Converti in 0-1
+
+      // Creiamo un offscreen document per riprodurre l'audio
+      chrome.offscreen
+        .createDocument({
+          url: 'offscreen.html',
+          reasons: ['AUDIO_PLAYBACK'],
+          justification: 'Riproduzione suono di notifica per timbratura mancante',
+        })
+        .then(() => {
+          chrome.runtime.sendMessage({
+            action: 'playSound',
+            soundType: options.soundType,
+            volume: volume,
+          });
+        })
+        .catch((error) => {
+          // Se il documento esiste già, inviamo solo il messaggio
+          if (error.message.includes('Only a single offscreen')) {
+            chrome.runtime.sendMessage({
+              action: 'playSound',
+              soundType: options.soundType,
+              volume: volume,
+            });
+          }
         });
-      }
-    });
-  });
+    }
+  );
 }
 
 // Funzione per fermare il suono
@@ -331,30 +339,54 @@ function checkAndSendNotifications(currentTime, isTimbrato) {
   }
 
   // Notifica per entrata mattina
-  if (isTimbrato === false && !notificationsSent.morning &&
-    currentTime >= workSchedule.morningStart && currentTime < workSchedule.morningStart + NOTIFICATION_WINDOW_MINUTES) {
-    sendNotification('TIMBRA ENTRATA', 'Buongiorno! È ora di timbrare l\'entrata', true);
+  if (
+    isTimbrato === false &&
+    !notificationsSent.morning &&
+    currentTime >= workSchedule.morningStart &&
+    currentTime < workSchedule.morningStart + NOTIFICATION_WINDOW_MINUTES
+  ) {
+    sendNotification('TIMBRA ENTRATA', "Buongiorno! È ora di timbrare l'entrata", true);
     notificationsSent.morning = true;
   }
 
   // Notifica per inizio pausa pranzo
-  if (isTimbrato === true && !notificationsSent.lunch &&
-    currentTime >= workSchedule.lunchEnd && currentTime < workSchedule.lunchEnd + NOTIFICATION_WINDOW_MINUTES) {
-    sendNotification('TIMBRA INIZIO PAUSA PRANZO', 'È ora di timbrare l\'uscita per la pausa pranzo', true);
+  if (
+    isTimbrato === true &&
+    !notificationsSent.lunch &&
+    currentTime >= workSchedule.lunchEnd &&
+    currentTime < workSchedule.lunchEnd + NOTIFICATION_WINDOW_MINUTES
+  ) {
+    sendNotification(
+      'TIMBRA INIZIO PAUSA PRANZO',
+      "È ora di timbrare l'uscita per la pausa pranzo",
+      true
+    );
     notificationsSent.lunch = true;
   }
 
   // Notifica per fine pausa pranzo (entrata pomeriggio)
-  if (isTimbrato === false && !notificationsSent.afternoon &&
-    currentTime >= workSchedule.afternoonStart && currentTime < workSchedule.afternoonStart + NOTIFICATION_WINDOW_MINUTES) {
-    sendNotification('TIMBRA FINE PAUSA PRANZO', 'È ora di timbrare il rientro dalla pausa pranzo', true);
+  if (
+    isTimbrato === false &&
+    !notificationsSent.afternoon &&
+    currentTime >= workSchedule.afternoonStart &&
+    currentTime < workSchedule.afternoonStart + NOTIFICATION_WINDOW_MINUTES
+  ) {
+    sendNotification(
+      'TIMBRA FINE PAUSA PRANZO',
+      'È ora di timbrare il rientro dalla pausa pranzo',
+      true
+    );
     notificationsSent.afternoon = true;
   }
 
   // Notifica per uscita serale
-  if (isTimbrato === true && !notificationsSent.evening &&
-    currentTime >= workSchedule.eveningEnd && currentTime < workSchedule.eveningEnd + NOTIFICATION_WINDOW_MINUTES) {
-    sendNotification('TIMBRA USCITA', 'È ora di timbrare l\'uscita', true);
+  if (
+    isTimbrato === true &&
+    !notificationsSent.evening &&
+    currentTime >= workSchedule.eveningEnd &&
+    currentTime < workSchedule.eveningEnd + NOTIFICATION_WINDOW_MINUTES
+  ) {
+    sendNotification('TIMBRA USCITA', "È ora di timbrare l'uscita", true);
     notificationsSent.evening = true;
   }
 }
@@ -384,27 +416,30 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     // Test del suono dalle opzioni
     const soundType = request.soundType || 'classic';
     const volume = request.volume !== undefined ? request.volume : 0.5;
-    
-    chrome.offscreen.createDocument({
-      url: 'offscreen.html',
-      reasons: ['AUDIO_PLAYBACK'],
-      justification: 'Test suono notifica'
-    }).then(() => {
-      chrome.runtime.sendMessage({ 
-        action: 'testSound',
-        soundType: soundType,
-        volume: volume
-      });
-    }).catch((error) => {
-      if (error.message.includes('Only a single offscreen')) {
-        chrome.runtime.sendMessage({ 
+
+    chrome.offscreen
+      .createDocument({
+        url: 'offscreen.html',
+        reasons: ['AUDIO_PLAYBACK'],
+        justification: 'Test suono notifica',
+      })
+      .then(() => {
+        chrome.runtime.sendMessage({
           action: 'testSound',
           soundType: soundType,
-          volume: volume
+          volume: volume,
         });
-      }
-    });
-    
+      })
+      .catch((error) => {
+        if (error.message.includes('Only a single offscreen')) {
+          chrome.runtime.sendMessage({
+            action: 'testSound',
+            soundType: soundType,
+            volume: volume,
+          });
+        }
+      });
+
     sendResponse({ success: true });
     return true;
   } else if (request.action === 'updateIcon') {
@@ -470,66 +505,68 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
   return true;
 });
 
-
 // Controlliamo periodicamente se deve lampeggiare e suonare
 setInterval(() => {
-  chrome.storage.local.get(['timbratureStatus', 'mutedSituation', 'lastSituationId'], function (data) {
-    if (data && data.timbratureStatus && data.timbratureStatus.isTimbrato !== null) {
-      const isTimbrato = data.timbratureStatus.isTimbrato;
-      const baseState = isTimbrato ? 'green' : 'red';
+  chrome.storage.local.get(
+    ['timbratureStatus', 'mutedSituation', 'lastSituationId'],
+    function (data) {
+      if (data && data.timbratureStatus && data.timbratureStatus.isTimbrato !== null) {
+        const isTimbrato = data.timbratureStatus.isTimbrato;
+        const baseState = isTimbrato ? 'green' : 'red';
 
-      checkShouldBlink(isTimbrato, function (shouldBlink) {
-        const currentSituationId = getCurrentSituationId();
-        const lastSituationId = data.lastSituationId;
-        
-        // Verifica se la situazione è cambiata (es: da "entrata mattina" a "uscita pranzo")
-        const situationChanged = currentSituationId !== lastSituationId;
-        
-        if (shouldBlink) {
-          // Se la situazione è cambiata, riavvia il suono anche se già lampeggia
-          if (situationChanged && currentSituationId) {
-            log('[Background] Situazione cambiata:', lastSituationId, '->', currentSituationId);
-            chrome.storage.local.set({ lastSituationId: currentSituationId });
-            
-            // Rimuovi il vecchio silenziamento
-            chrome.storage.local.remove('mutedSituation');
-            
-            // Riavvia suono e lampeggio
-            stopSound();
-            startBlinking(baseState);
-            startSound();
-            chrome.storage.local.set({ isBlinking: true });
-          } else if (!isBlinking) {
-            // Prima volta che deve lampeggiare
-            if (data.mutedSituation === currentSituationId) {
-              // Situazione silenziata, solo lampeggia
-              startBlinking(baseState);
-              chrome.storage.local.set({ isBlinking: true });
-            } else {
-              // Situazione non silenziata
+        checkShouldBlink(isTimbrato, function (shouldBlink) {
+          const currentSituationId = getCurrentSituationId();
+          const lastSituationId = data.lastSituationId;
+
+          // Verifica se la situazione è cambiata (es: da "entrata mattina" a "uscita pranzo")
+          const situationChanged = currentSituationId !== lastSituationId;
+
+          if (shouldBlink) {
+            // Se la situazione è cambiata, riavvia il suono anche se già lampeggia
+            if (situationChanged && currentSituationId) {
+              log('[Background] Situazione cambiata:', lastSituationId, '->', currentSituationId);
+              chrome.storage.local.set({ lastSituationId: currentSituationId });
+
+              // Rimuovi il vecchio silenziamento
+              chrome.storage.local.remove('mutedSituation');
+
+              // Riavvia suono e lampeggio
+              stopSound();
               startBlinking(baseState);
               startSound();
               chrome.storage.local.set({ isBlinking: true });
-            }
-            
-            if (currentSituationId) {
-              chrome.storage.local.set({ lastSituationId: currentSituationId });
-            }
-          }
-        } else if (!shouldBlink && isBlinking) {
-          stopBlinking();
-          stopSound();
-          setIcon(baseState);
-          chrome.storage.local.set({ isBlinking: false });
+            } else if (!isBlinking) {
+              // Prima volta che deve lampeggiare
+              if (data.mutedSituation === currentSituationId) {
+                // Situazione silenziata, solo lampeggia
+                startBlinking(baseState);
+                chrome.storage.local.set({ isBlinking: true });
+              } else {
+                // Situazione non silenziata
+                startBlinking(baseState);
+                startSound();
+                chrome.storage.local.set({ isBlinking: true });
+              }
 
-          // Rimuovi il silenziamento quando la situazione cambia
-          chrome.storage.local.remove('mutedSituation');
-        }
-        // Aggiorna il badge countdown
-        updateBadgeCountdown(isTimbrato);
-      });
+              if (currentSituationId) {
+                chrome.storage.local.set({ lastSituationId: currentSituationId });
+              }
+            }
+          } else if (!shouldBlink && isBlinking) {
+            stopBlinking();
+            stopSound();
+            setIcon(baseState);
+            chrome.storage.local.set({ isBlinking: false });
+
+            // Rimuovi il silenziamento quando la situazione cambia
+            chrome.storage.local.remove('mutedSituation');
+          }
+          // Aggiorna il badge countdown
+          updateBadgeCountdown(isTimbrato);
+        });
+      }
     }
-  });
+  );
 }, STATUS_CHECK_MS);
 
 // Aggiorna il badge ogni minuto per il countdown
@@ -543,49 +580,52 @@ setInterval(() => {
 
 // Funzione per verificare se oggi è escluso
 function isExcludedDay(callback) {
-  chrome.storage.local.get({
-    excludeWeekends: true,
-    fullDayExclusions: [],
-    halfDayExclusions: []
-  }, function (options) {
-    const now = new Date();
-    const day = now.getDay(); // 0 = Domenica, 6 = Sabato
-    const hours = now.getHours();
-    const minutes = now.getMinutes();
-    const currentTime = hours * 60 + minutes;
+  chrome.storage.local.get(
+    {
+      excludeWeekends: true,
+      fullDayExclusions: [],
+      halfDayExclusions: [],
+    },
+    function (options) {
+      const now = new Date();
+      const day = now.getDay(); // 0 = Domenica, 6 = Sabato
+      const hours = now.getHours();
+      const minutes = now.getMinutes();
+      const currentTime = hours * 60 + minutes;
 
-    // Formato data YYYY-MM-DD
-    const today = now.toISOString().split('T')[0];
+      // Formato data YYYY-MM-DD
+      const today = now.toISOString().split('T')[0];
 
-    // Verifica weekend
-    if (options.excludeWeekends && (day === 0 || day === 6)) {
-      callback({ excluded: true, reason: 'weekend' });
-      return;
-    }
-
-    // Verifica giornate intere escluse
-    if (options.fullDayExclusions.some(e => e.date === today)) {
-      callback({ excluded: true, reason: 'fullDay' });
-      return;
-    }
-
-    // Verifica mezze giornate escluse
-    const halfDayExclusion = options.halfDayExclusions.find(e => e.date === today);
-    if (halfDayExclusion) {
-      // Mattina: 8:00-13:00 (480-780 minuti)
-      // Pomeriggio: 14:00-18:00 (840-1080 minuti)
-      if (halfDayExclusion.period === 'morning' && currentTime >= 480 && currentTime < 780) {
-        callback({ excluded: true, reason: 'halfDayMorning' });
+      // Verifica weekend
+      if (options.excludeWeekends && (day === 0 || day === 6)) {
+        callback({ excluded: true, reason: 'weekend' });
         return;
       }
-      if (halfDayExclusion.period === 'afternoon' && currentTime >= 840 && currentTime <= 1080) {
-        callback({ excluded: true, reason: 'halfDayAfternoon' });
+
+      // Verifica giornate intere escluse
+      if (options.fullDayExclusions.some((e) => e.date === today)) {
+        callback({ excluded: true, reason: 'fullDay' });
         return;
       }
-    }
 
-    callback({ excluded: false });
-  });
+      // Verifica mezze giornate escluse
+      const halfDayExclusion = options.halfDayExclusions.find((e) => e.date === today);
+      if (halfDayExclusion) {
+        // Mattina: 8:00-13:00 (480-780 minuti)
+        // Pomeriggio: 14:00-18:00 (840-1080 minuti)
+        if (halfDayExclusion.period === 'morning' && currentTime >= 480 && currentTime < 780) {
+          callback({ excluded: true, reason: 'halfDayMorning' });
+          return;
+        }
+        if (halfDayExclusion.period === 'afternoon' && currentTime >= 840 && currentTime <= 1080) {
+          callback({ excluded: true, reason: 'halfDayAfternoon' });
+          return;
+        }
+      }
+
+      callback({ excluded: false });
+    }
+  );
 }
 
 // Funzione per verificare se siamo in orario lavorativo
@@ -622,7 +662,7 @@ function openDipendentiInCloud() {
       // La tab non esiste, la creiamo
       chrome.tabs.create({
         url: 'https://secure.dipendentincloud.it/it/app/dashboard',
-        active: false // Apriamo in background per non disturbare
+        active: false, // Apriamo in background per non disturbare
       });
     }
   });
@@ -691,14 +731,34 @@ function sendStartupNotification(isTimbrato) {
     const currentTime = now.getHours() * 60 + now.getMinutes();
 
     // Verifica in quale fascia oraria siamo e se serve notifica
-    if (isTimbrato === false && currentTime >= workSchedule.morningStart && currentTime < workSchedule.lunchEnd) {
-      sendNotification('TIMBRA ENTRATA', 'Non hai ancora timbrato l\'entrata del mattino!', true);
-    } else if (isTimbrato === true && currentTime >= workSchedule.lunchEnd && currentTime < workSchedule.afternoonStart) {
-      sendNotification('TIMBRA INIZIO PAUSA PRANZO', 'Non hai ancora timbrato l\'uscita per la pausa pranzo!', true);
-    } else if (isTimbrato === false && currentTime >= workSchedule.afternoonStart && currentTime < workSchedule.eveningEnd) {
-      sendNotification('TIMBRA FINE PAUSA PRANZO', 'Non hai ancora timbrato il rientro dalla pausa pranzo!', true);
+    if (
+      isTimbrato === false &&
+      currentTime >= workSchedule.morningStart &&
+      currentTime < workSchedule.lunchEnd
+    ) {
+      sendNotification('TIMBRA ENTRATA', "Non hai ancora timbrato l'entrata del mattino!", true);
+    } else if (
+      isTimbrato === true &&
+      currentTime >= workSchedule.lunchEnd &&
+      currentTime < workSchedule.afternoonStart
+    ) {
+      sendNotification(
+        'TIMBRA INIZIO PAUSA PRANZO',
+        "Non hai ancora timbrato l'uscita per la pausa pranzo!",
+        true
+      );
+    } else if (
+      isTimbrato === false &&
+      currentTime >= workSchedule.afternoonStart &&
+      currentTime < workSchedule.eveningEnd
+    ) {
+      sendNotification(
+        'TIMBRA FINE PAUSA PRANZO',
+        'Non hai ancora timbrato il rientro dalla pausa pranzo!',
+        true
+      );
     } else if (isTimbrato === true && currentTime >= workSchedule.eveningEnd) {
-      sendNotification('TIMBRA USCITA', 'Non hai ancora timbrato l\'uscita serale!', true);
+      sendNotification('TIMBRA USCITA', "Non hai ancora timbrato l'uscita serale!", true);
     }
   });
 }

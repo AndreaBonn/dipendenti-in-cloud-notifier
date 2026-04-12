@@ -1,223 +1,231 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
+  <head>
+    <title>Opzioni - Stato Timbratura</title>
+    <meta charset="UTF-8" />
+    <link rel="stylesheet" href="options.css" />
+  </head>
 
-<head>
-  <title>Opzioni - Stato Timbratura</title>
-  <meta charset="UTF-8">
-  <link rel="stylesheet" href="options.css">
-</head>
+  <body>
+    <h1>⚙️ Opzioni Estensione Timbratura</h1>
 
-<body>
-  <h1>⚙️ Opzioni Estensione Timbratura</h1>
-
-  <div class="disclaimer">
-    <strong>⚠️ DISCLAIMER:</strong> Questa è un'estensione <strong>NON UFFICIALE</strong> e <strong>NON è
-      affiliata</strong>
-    con Dipendenti in Cloud o dipendentincloud.it. L'utente è completamente responsabile delle proprie timbrature.
-    Questa estensione è fornita come strumento di convenienza senza alcuna garanzia.
-  </div>
-
-  <div class="section">
-    <h2>Impostazioni Generali</h2>
-
-    <div class="option">
-      <label>
-        <input type="checkbox" id="autoOpenSite" checked>
-        <span>Apri automaticamente Dipendenti in Cloud all'avvio di Chrome</span>
-      </label>
-      <div class="description">
-        Quando attivi questa opzione, l'estensione aprirà automaticamente il sito Dipendenti in Cloud
-        all'avvio di Chrome durante l'orario lavorativo.
-        Questo permette di verificare subito lo stato della timbratura.
-      </div>
+    <div class="disclaimer">
+      <strong>⚠️ DISCLAIMER:</strong> Questa è un'estensione <strong>NON UFFICIALE</strong> e
+      <strong>NON è affiliata</strong>
+      con Dipendenti in Cloud o dipendentincloud.it. L'utente è completamente responsabile delle
+      proprie timbrature. Questa estensione è fornita come strumento di convenienza senza alcuna
+      garanzia.
     </div>
 
-    <div class="option">
-      <label>
-        <input type="checkbox" id="excludeWeekends" checked>
-        <span>Escludi sabato e domenica</span>
-      </label>
-      <div class="description">
-        L'estensione non invierà notifiche e non controllerà la timbratura durante il weekend.
-      </div>
-    </div>
-  </div>
+    <div class="section">
+      <h2>Impostazioni Generali</h2>
 
-  <div class="section">
-    <h2>Orari di Lavoro</h2>
-    <div class="description" style="margin-left: 0; margin-bottom: 15px;">
-      Configura i tuoi orari di lavoro personalizzati.
-    </div>
-
-    <div class="time-settings">
-      <div class="time-row">
-        <label>Entrata Mattina</label>
-        <input type="time" id="morningStart" value="09:00">
-      </div>
-      <div class="time-row">
-        <label>Uscita Pranzo</label>
-        <input type="time" id="lunchEnd" value="13:00">
-      </div>
-      <div class="time-row">
-        <label>Entrata Pomeriggio</label>
-        <input type="time" id="afternoonStart" value="14:00">
-      </div>
-      <div class="time-row">
-        <label>Uscita Serale</label>
-        <input type="time" id="eveningEnd" value="18:00">
-      </div>
-    </div>
-  </div>
-
-  <div class="section">
-    <h2>Notifiche e Suoni</h2>
-
-    <div class="option">
-      <label>
-        <input type="checkbox" id="enableNotifications" checked>
-        <span>Abilita notifiche desktop</span>
-      </label>
-      <div class="description">
-        Ricevi notifiche desktop quando è ora di timbrare.
-      </div>
-    </div>
-
-    <div class="option">
-      <label>
-        <input type="checkbox" id="enableSound" checked>
-        <span>Abilita suoni di notifica</span>
-      </label>
-      <div class="description">
-        Riproduci un suono quando è ora di timbrare (ripetuto ogni 5 minuti).
-      </div>
-    </div>
-
-    <div class="option">
-      <div style="margin-bottom: 10px;">
-        <label style="display: block; margin-bottom: 8px; font-weight: 500;">
-          Tipo di suono
+      <div class="option">
+        <label>
+          <input type="checkbox" id="autoOpenSite" checked />
+          <span>Apri automaticamente Dipendenti in Cloud all'avvio di Chrome</span>
         </label>
-        <select id="soundType" style="width: 100%; padding: 8px; border: 1px solid #ced4da; border-radius: 4px; font-size: 14px;">
-          <option value="classic">Classico (morbido e professionale)</option>
-          <option value="gentle">Gentile (discreto e piacevole)</option>
-          <option value="bell">Campanella (simile a smartphone)</option>
-          <option value="digital">Digitale (moderno e tech)</option>
-          <option value="urgent">Urgente (più incisivo)</option>
-          <option value="alarm">Allarme (molto evidente)</option>
-        </select>
+        <div class="description">
+          Quando attivi questa opzione, l'estensione aprirà automaticamente il sito Dipendenti in
+          Cloud all'avvio di Chrome durante l'orario lavorativo. Questo permette di verificare
+          subito lo stato della timbratura.
+        </div>
       </div>
-      <button id="testSound" class="button-secondary" style="margin-top: 5px;">🔊 Prova Suono</button>
-      <div class="description">
-        Scegli il tipo di suono che preferisci per le notifiche.
-      </div>
-    </div>
 
-    <div class="option">
-      <div style="margin-bottom: 10px;">
-        <label style="display: block; margin-bottom: 8px; font-weight: 500;">
-          Volume: <span id="volumeValue">50%</span>
+      <div class="option">
+        <label>
+          <input type="checkbox" id="excludeWeekends" checked />
+          <span>Escludi sabato e domenica</span>
         </label>
-        <input type="range" id="soundVolume" min="0" max="100" value="50" 
-               style="width: 100%; cursor: pointer;">
-      </div>
-      <div class="description">
-        Regola il volume del suono di notifica.
-      </div>
-    </div>
-  </div>
-
-  <div class="section">
-    <h2>Giornate Escluse (Ferie)</h2>
-    <div class="description" style="margin-left: 0; margin-bottom: 10px;">
-      Aggiungi le date in cui sei in ferie o assente per l'intera giornata.
-    </div>
-
-    <div class="import-section">
-      <button id="importAssenze" class="button-import">📥 Importa da Dipendenti in Cloud</button>
-      <div class="description" style="margin-left: 0; margin-top: 5px;">
-        Importa automaticamente le assenze registrate su Dipendenti in Cloud.
+        <div class="description">
+          L'estensione non invierà notifiche e non controllerà la timbratura durante il weekend.
+        </div>
       </div>
     </div>
 
-    <div id="fullDayExclusions" class="exclusion-list"></div>
-    <div id="emptyFullDay" class="empty-list">Nessuna giornata esclusa</div>
-
-    <div class="add-exclusion">
-      <div class="input-group">
-        <label>Data</label>
-        <input type="date" id="fullDayDate">
+    <div class="section">
+      <h2>Orari di Lavoro</h2>
+      <div class="description" style="margin-left: 0; margin-bottom: 15px">
+        Configura i tuoi orari di lavoro personalizzati.
       </div>
-      <div class="input-group">
-        <label>Descrizione (opzionale)</label>
-        <input type="text" id="fullDayDescription" placeholder="es. Ferie Estive">
-      </div>
-      <button id="addFullDay" class="button-secondary">+ Aggiungi</button>
-    </div>
-  </div>
 
-  <div class="section">
-    <h2>Mezze Giornate Escluse (Permessi)</h2>
-    <div class="description" style="margin-left: 0; margin-bottom: 10px;">
-      Aggiungi le date in cui hai permessi per mezza giornata (mattina o pomeriggio).
-    </div>
-
-    <div id="halfDayExclusions" class="exclusion-list"></div>
-    <div id="emptyHalfDay" class="empty-list">Nessuna mezza giornata esclusa</div>
-
-    <div class="add-exclusion">
-      <div class="input-group">
-        <label>Data</label>
-        <input type="date" id="halfDayDate">
-      </div>
-      <div class="input-group">
-        <label>Periodo</label>
-        <select id="halfDayPeriod">
-          <option value="morning">Mattina (8:00-13:00)</option>
-          <option value="afternoon">Pomeriggio (14:00-18:00)</option>
-        </select>
-      </div>
-      <div class="input-group">
-        <label>Descrizione (opzionale)</label>
-        <input type="text" id="halfDayDescription" placeholder="es. Permesso Medico">
-      </div>
-      <button id="addHalfDay" class="button-secondary">+ Aggiungi</button>
-    </div>
-  </div>
-
-  <button id="save" class="button">Salva Impostazioni</button>
-
-  <div id="status" class="status">
-    ✓ Impostazioni salvate con successo!
-  </div>
-
-  <!-- Modal per importazione assenze -->
-  <div id="importModal" class="modal">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h2>📥 Importa Assenze</h2>
-        <span class="close">&times;</span>
-      </div>
-      <div id="assenzeList"></div>
-      <div class="modal-footer">
-        <button class="button-cancel" id="cancelImport">Annulla</button>
-        <button class="button-confirm" id="confirmImport">Importa Selezionate</button>
+      <div class="time-settings">
+        <div class="time-row">
+          <label>Entrata Mattina</label>
+          <input type="time" id="morningStart" value="09:00" />
+        </div>
+        <div class="time-row">
+          <label>Uscita Pranzo</label>
+          <input type="time" id="lunchEnd" value="13:00" />
+        </div>
+        <div class="time-row">
+          <label>Entrata Pomeriggio</label>
+          <input type="time" id="afternoonStart" value="14:00" />
+        </div>
+        <div class="time-row">
+          <label>Uscita Serale</label>
+          <input type="time" id="eveningEnd" value="18:00" />
+        </div>
       </div>
     </div>
-  </div>
 
-  <div class="toast-container" id="toastContainer"></div>
+    <div class="section">
+      <h2>Notifiche e Suoni</h2>
 
-  <div class="confirm-overlay" id="confirmOverlay">
-    <div class="confirm-dialog">
-      <p id="confirmMessage"></p>
-      <div class="confirm-actions">
-        <button class="button-cancel" id="confirmNo">Annulla</button>
-        <button class="button-confirm" id="confirmYes">Conferma</button>
+      <div class="option">
+        <label>
+          <input type="checkbox" id="enableNotifications" checked />
+          <span>Abilita notifiche desktop</span>
+        </label>
+        <div class="description">Ricevi notifiche desktop quando è ora di timbrare.</div>
+      </div>
+
+      <div class="option">
+        <label>
+          <input type="checkbox" id="enableSound" checked />
+          <span>Abilita suoni di notifica</span>
+        </label>
+        <div class="description">
+          Riproduci un suono quando è ora di timbrare (ripetuto ogni 5 minuti).
+        </div>
+      </div>
+
+      <div class="option">
+        <div style="margin-bottom: 10px">
+          <label style="display: block; margin-bottom: 8px; font-weight: 500">
+            Tipo di suono
+          </label>
+          <select
+            id="soundType"
+            style="
+              width: 100%;
+              padding: 8px;
+              border: 1px solid #ced4da;
+              border-radius: 4px;
+              font-size: 14px;
+            "
+          >
+            <option value="classic">Classico (morbido e professionale)</option>
+            <option value="gentle">Gentile (discreto e piacevole)</option>
+            <option value="bell">Campanella (simile a smartphone)</option>
+            <option value="digital">Digitale (moderno e tech)</option>
+            <option value="urgent">Urgente (più incisivo)</option>
+            <option value="alarm">Allarme (molto evidente)</option>
+          </select>
+        </div>
+        <button id="testSound" class="button-secondary" style="margin-top: 5px">
+          🔊 Prova Suono
+        </button>
+        <div class="description">Scegli il tipo di suono che preferisci per le notifiche.</div>
+      </div>
+
+      <div class="option">
+        <div style="margin-bottom: 10px">
+          <label style="display: block; margin-bottom: 8px; font-weight: 500">
+            Volume: <span id="volumeValue">50%</span>
+          </label>
+          <input
+            type="range"
+            id="soundVolume"
+            min="0"
+            max="100"
+            value="50"
+            style="width: 100%; cursor: pointer"
+          />
+        </div>
+        <div class="description">Regola il volume del suono di notifica.</div>
       </div>
     </div>
-  </div>
 
-  <script src="options.js"></script>
-</body>
+    <div class="section">
+      <h2>Giornate Escluse (Ferie)</h2>
+      <div class="description" style="margin-left: 0; margin-bottom: 10px">
+        Aggiungi le date in cui sei in ferie o assente per l'intera giornata.
+      </div>
 
+      <div class="import-section">
+        <button id="importAssenze" class="button-import">📥 Importa da Dipendenti in Cloud</button>
+        <div class="description" style="margin-left: 0; margin-top: 5px">
+          Importa automaticamente le assenze registrate su Dipendenti in Cloud.
+        </div>
+      </div>
+
+      <div id="fullDayExclusions" class="exclusion-list"></div>
+      <div id="emptyFullDay" class="empty-list">Nessuna giornata esclusa</div>
+
+      <div class="add-exclusion">
+        <div class="input-group">
+          <label>Data</label>
+          <input type="date" id="fullDayDate" />
+        </div>
+        <div class="input-group">
+          <label>Descrizione (opzionale)</label>
+          <input type="text" id="fullDayDescription" placeholder="es. Ferie Estive" />
+        </div>
+        <button id="addFullDay" class="button-secondary">+ Aggiungi</button>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Mezze Giornate Escluse (Permessi)</h2>
+      <div class="description" style="margin-left: 0; margin-bottom: 10px">
+        Aggiungi le date in cui hai permessi per mezza giornata (mattina o pomeriggio).
+      </div>
+
+      <div id="halfDayExclusions" class="exclusion-list"></div>
+      <div id="emptyHalfDay" class="empty-list">Nessuna mezza giornata esclusa</div>
+
+      <div class="add-exclusion">
+        <div class="input-group">
+          <label>Data</label>
+          <input type="date" id="halfDayDate" />
+        </div>
+        <div class="input-group">
+          <label>Periodo</label>
+          <select id="halfDayPeriod">
+            <option value="morning">Mattina (8:00-13:00)</option>
+            <option value="afternoon">Pomeriggio (14:00-18:00)</option>
+          </select>
+        </div>
+        <div class="input-group">
+          <label>Descrizione (opzionale)</label>
+          <input type="text" id="halfDayDescription" placeholder="es. Permesso Medico" />
+        </div>
+        <button id="addHalfDay" class="button-secondary">+ Aggiungi</button>
+      </div>
+    </div>
+
+    <button id="save" class="button">Salva Impostazioni</button>
+
+    <div id="status" class="status">✓ Impostazioni salvate con successo!</div>
+
+    <!-- Modal per importazione assenze -->
+    <div id="importModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>📥 Importa Assenze</h2>
+          <span class="close">&times;</span>
+        </div>
+        <div id="assenzeList"></div>
+        <div class="modal-footer">
+          <button class="button-cancel" id="cancelImport">Annulla</button>
+          <button class="button-confirm" id="confirmImport">Importa Selezionate</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="toast-container" id="toastContainer"></div>
+
+    <div class="confirm-overlay" id="confirmOverlay">
+      <div class="confirm-dialog">
+        <p id="confirmMessage"></p>
+        <div class="confirm-actions">
+          <button class="button-cancel" id="confirmNo">Annulla</button>
+          <button class="button-confirm" id="confirmYes">Conferma</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="options.js"></script>
+  </body>
 </html>

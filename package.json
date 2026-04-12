@@ -1,0 +1,28 @@
+{
+  "name": "promemoria-timbrature",
+  "version": "2.0.0",
+  "description": "Chrome extension (unofficial) for dipendentincloud.it time-clock reminders",
+  "private": true,
+  "scripts": {
+    "lint": "eslint *.js",
+    "lint:fix": "eslint *.js --fix",
+    "format": "prettier --write '*.{js,css,html,json,md}'",
+    "format:check": "prettier --check '*.{js,css,html,json,md}'"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AndreaBonn/PRIVATE__EstensioneChrome_DipendentiInCloud.git"
+  },
+  "author": "Andrea Bonacci",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/AndreaBonn/PRIVATE__EstensioneChrome_DipendentiInCloud/issues"
+  },
+  "homepage": "https://github.com/AndreaBonn/PRIVATE__EstensioneChrome_DipendentiInCloud#readme",
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.2.0",
+    "globals": "^17.5.0",
+    "prettier": "^3.8.2"
+  }
+}

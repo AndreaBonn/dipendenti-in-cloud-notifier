@@ -56,8 +56,8 @@ document.addEventListener('DOMContentLoaded', function () {
     storicoList.textContent = '';
     timbrature.forEach((timb, index) => {
       const item = document.createElement('div');
-      const tipo = (index % 2 === 0) ? 'entrata' : 'uscita';
-      const tipoLabel = (index % 2 === 0) ? 'Entrata' : 'Uscita';
+      const tipo = index % 2 === 0 ? 'entrata' : 'uscita';
+      const tipoLabel = index % 2 === 0 ? 'Entrata' : 'Uscita';
 
       item.className = `storico-item ${tipo}`;
 
@@ -86,41 +86,47 @@ document.addEventListener('DOMContentLoaded', function () {
       month: '2-digit',
       year: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
     });
   }
 
   // Funzione per verificare se oggi è escluso
   function checkExcludedDay(callback) {
-    chrome.storage.local.get({
-      excludeWeekends: true,
-      fullDayExclusions: [],
-      halfDayExclusions: []
-    }, function (options) {
-      const now = new Date();
-      const day = now.getDay();
-      const today = now.toISOString().split('T')[0];
+    chrome.storage.local.get(
+      {
+        excludeWeekends: true,
+        fullDayExclusions: [],
+        halfDayExclusions: [],
+      },
+      function (options) {
+        const now = new Date();
+        const day = now.getDay();
+        const today = now.toISOString().split('T')[0];
 
-      if (options.excludeWeekends && (day === 0 || day === 6)) {
-        callback({ excluded: true, reason: 'Weekend' });
-        return;
+        if (options.excludeWeekends && (day === 0 || day === 6)) {
+          callback({ excluded: true, reason: 'Weekend' });
+          return;
+        }
+
+        const fullDay = options.fullDayExclusions.find((e) => e.date === today);
+        if (fullDay) {
+          callback({ excluded: true, reason: fullDay.description || 'Giornata esclusa' });
+          return;
+        }
+
+        const halfDay = options.halfDayExclusions.find((e) => e.date === today);
+        if (halfDay) {
+          const period = halfDay.period === 'morning' ? 'Mattina' : 'Pomeriggio';
+          callback({
+            excluded: true,
+            reason: `${period} escluso${halfDay.description ? ' - ' + halfDay.description : ''}`,
+          });
+          return;
+        }
+
+        callback({ excluded: false });
       }
-
-      const fullDay = options.fullDayExclusions.find(e => e.date === today);
-      if (fullDay) {
-        callback({ excluded: true, reason: fullDay.description || 'Giornata esclusa' });
-        return;
-      }
-
-      const halfDay = options.halfDayExclusions.find(e => e.date === today);
-      if (halfDay) {
-        const period = halfDay.period === 'morning' ? 'Mattina' : 'Pomeriggio';
-        callback({ excluded: true, reason: `${period} escluso${halfDay.description ? ' - ' + halfDay.description : ''}` });
-        return;
-      }
-
-      callback({ excluded: false });
-    });
+    );
   }
 
   // Funzione per calcolare e mostrare il countdown
@@ -146,12 +152,10 @@ document.addEventListener('DOMContentLoaded', function () {
     countdownInterval = setInterval(() => {
       const now = new Date();
       const hours = now.getHours();
-      const minutes = now.getMinutes();
-      const seconds = now.getSeconds();
 
-      let targetTime = null;
-      let targetLabel = '';
-      let isUrgent = false;
+      let targetTime;
+      let targetLabel;
+      let isUrgent;
 
       // Determiniamo il prossimo evento in base allo stato e all'orario
       if (isTimbrato === false) {
@@ -165,7 +169,7 @@ document.addEventListener('DOMContentLoaded', function () {
           targetTime = new Date(now);
           targetTime.setHours(13, 0, 0, 0);
           targetLabel = 'Entrata Mattina (scadenza)';
-          isUrgent = (hours >= 9);
+          isUrgent = hours >= 9;
         } else if (hours < 14) {
           targetTime = new Date(now);
           targetTime.setHours(14, 0, 0, 0);
@@ -175,7 +179,7 @@ document.addEventListener('DOMContentLoaded', function () {
           targetTime = new Date(now);
           targetTime.setHours(18, 0, 0, 0);
           targetLabel = 'Entrata Pomeriggio (scadenza)';
-          isUrgent = (hours >= 14);
+          isUrgent = hours >= 14;
         } else {
           countdownElement.textContent = 'Fuori Orario Lavorativo';
           countdownElement.className = 'countdown';
@@ -192,7 +196,7 @@ document.addEventListener('DOMContentLoaded', function () {
           targetTime = new Date(now);
           targetTime.setHours(14, 0, 0, 0);
           targetLabel = 'Uscita Pranzo (scadenza)';
-          isUrgent = (hours >= 13);
+          isUrgent = hours >= 13;
         } else if (hours < 18) {
           targetTime = new Date(now);
           targetTime.setHours(18, 0, 0, 0);
@@ -220,7 +224,7 @@ document.addEventListener('DOMContentLoaded', function () {
           const minutesLeft = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
           const secondsLeft = Math.floor((diff % (1000 * 60)) / 1000);
 
-          let timeString = '';
+          let timeString;
           if (hoursLeft > 0) {
             timeString = `${hoursLeft}h ${minutesLeft}m ${secondsLeft}s`;
           } else {
@@ -312,7 +316,7 @@ document.addEventListener('DOMContentLoaded', function () {
         isTimbrato: data.timbratureStatus.isTimbrato,
         lastTimbratura: data.timbratureStatus.lastTimbratura,
         fromStorage: true,
-        lastChecked: data.timbratureStatus.lastChecked
+        lastChecked: data.timbratureStatus.lastChecked,
       });
 
       // Anche se abbiamo lo stato dalla storage, proviamo comunque a ottenere lo stato in tempo reale
@@ -351,7 +355,8 @@ document.addEventListener('DOMContentLoaded', function () {
             statusElement.classList.add('non-disponibile');
             statusIcon.classList.add('gray');
             statusText.textContent = 'Stato non disponibile';
-            errorElement.textContent = 'Apri Dipendenti in Cloud per vedere lo stato della timbratura';
+            errorElement.textContent =
+              'Apri Dipendenti in Cloud per vedere lo stato della timbratura';
             errorElement.style.display = 'block';
           }
           return;

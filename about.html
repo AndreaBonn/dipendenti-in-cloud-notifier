@@ -1,187 +1,182 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
-<head>
-  <title>Informazioni - Promemoria Timbrature</title>
-  <meta charset="UTF-8">
-  <style>
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
-      padding: 30px;
-      max-width: 600px;
-      margin: 0 auto;
-      line-height: 1.6;
-      color: #333;
-    }
-    
-    h1 {
-      color: #212529;
-      font-size: 28px;
-      margin-bottom: 10px;
-    }
-    
-    .version {
-      color: #6c757d;
-      font-size: 14px;
-      margin-bottom: 30px;
-    }
-    
-    .disclaimer-box {
-      background-color: #fff3cd;
-      border: 3px solid #ffc107;
-      border-radius: 10px;
-      padding: 20px;
-      margin: 30px 0;
-    }
-    
-    .disclaimer-box h2 {
-      color: #856404;
-      margin-top: 0;
-      font-size: 20px;
-    }
-    
-    .disclaimer-box p {
-      color: #856404;
-      margin: 10px 0;
-    }
-    
-    .disclaimer-box strong {
-      font-weight: 700;
-    }
-    
-    .section {
-      margin: 30px 0;
-    }
-    
-    .section h2 {
-      color: #495057;
-      font-size: 20px;
-      margin-bottom: 15px;
-      border-bottom: 2px solid #dee2e6;
-      padding-bottom: 8px;
-    }
-    
-    .feature-list {
-      list-style: none;
-      padding: 0;
-    }
-    
-    .feature-list li {
-      padding: 8px 0;
-      padding-left: 25px;
-      position: relative;
-    }
-    
-    .feature-list li:before {
-      content: "✓";
-      position: absolute;
-      left: 0;
-      color: #28a745;
-      font-weight: bold;
-    }
-    
-    .button {
-      display: inline-block;
-      padding: 10px 20px;
-      background-color: #007bff;
-      color: white;
-      text-decoration: none;
-      border-radius: 5px;
-      margin-top: 10px;
-    }
-    
-    .button:hover {
-      background-color: #0069d9;
-    }
-    
-    .footer {
-      margin-top: 50px;
-      padding-top: 20px;
-      border-top: 1px solid #dee2e6;
-      text-align: center;
-      color: #6c757d;
-      font-size: 13px;
-    }
-  </style>
-</head>
-<body>
-  <h1>📋 Promemoria Timbrature</h1>
-  <div class="version">Versione 2.0.0</div>
-  
-  <div class="disclaimer-box">
-    <h2>⚠️ DISCLAIMER IMPORTANTE</h2>
-    <p>
-      Questa estensione è <strong>NON UFFICIALE</strong> e <strong>NON è affiliata, approvata o 
-      connessa</strong> in alcun modo con Dipendenti in Cloud, dipendentincloud.it o i suoi proprietari.
-    </p>
-    <p>
-      <strong>L'utente è completamente e unicamente responsabile</strong> delle proprie timbrature 
-      e della gestione della propria presenza lavorativa.
-    </p>
-    <p>
-      Questa estensione è fornita "così com'è" come strumento di convenienza, 
-      <strong>senza alcuna garanzia</strong> di funzionamento, accuratezza o affidabilità.
-    </p>
-    <p>
-      Tutti i nomi di prodotti, loghi e marchi sono proprietà dei rispettivi proprietari.
-    </p>
-  </div>
-  
-  <div class="section">
-    <h2>🎯 Cosa fa questa estensione</h2>
-    <p>
-      Promemoria Timbrature è uno strumento personale che ti aiuta a ricordare di timbrare 
-      su dipendentincloud.it attraverso:
-    </p>
-    <ul class="feature-list">
-      <li>Visualizzazione dello stato della timbratura</li>
-      <li>Notifiche e promemoria sonori</li>
-      <li>Countdown fino alla prossima timbratura</li>
-      <li>Storico delle timbrature del giorno</li>
-      <li>Timbratura rapida dal popup</li>
-      <li>Gestione giorni festivi e permessi</li>
-    </ul>
-  </div>
-  
-  <div class="section">
-    <h2>🔒 Privacy e Sicurezza</h2>
-    <p>
-      Questa estensione:
-    </p>
-    <ul class="feature-list">
-      <li>NON raccoglie dati personali</li>
-      <li>NON invia dati a server esterni</li>
-      <li>NON accede alle tue credenziali</li>
-      <li>Legge solo informazioni pubbliche dalla pagina web</li>
-      <li>Salva le impostazioni solo localmente sul tuo browser</li>
-    </ul>
-  </div>
-  
-  <div class="section">
-    <h2>📝 Licenza</h2>
-    <p>
-      Questo software è rilasciato sotto licenza MIT License.<br>
-      Il codice sorgente è disponibile su GitHub.
-    </p>
-  </div>
-  
-  <div class="section">
-    <h2>🤝 Supporto</h2>
-    <p>
-      Per problemi, domande o suggerimenti, visita la pagina GitHub del progetto.
-    </p>
-    <a href="#" class="button">Apri Opzioni</a>
-  </div>
-  
-  <div class="footer">
-    <p>Promemoria Timbrature v2.0.0</p>
-    <p>Estensione non ufficiale per uso personale</p>
-  </div>
-  
-  <script>
-    document.querySelector('.button').addEventListener('click', function(e) {
-      e.preventDefault();
-      chrome.runtime.openOptionsPage();
-    });
-  </script>
-</body>
+  <head>
+    <title>Informazioni - Promemoria Timbrature</title>
+    <meta charset="UTF-8" />
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+        padding: 30px;
+        max-width: 600px;
+        margin: 0 auto;
+        line-height: 1.6;
+        color: #333;
+      }
+
+      h1 {
+        color: #212529;
+        font-size: 28px;
+        margin-bottom: 10px;
+      }
+
+      .version {
+        color: #6c757d;
+        font-size: 14px;
+        margin-bottom: 30px;
+      }
+
+      .disclaimer-box {
+        background-color: #fff3cd;
+        border: 3px solid #ffc107;
+        border-radius: 10px;
+        padding: 20px;
+        margin: 30px 0;
+      }
+
+      .disclaimer-box h2 {
+        color: #856404;
+        margin-top: 0;
+        font-size: 20px;
+      }
+
+      .disclaimer-box p {
+        color: #856404;
+        margin: 10px 0;
+      }
+
+      .disclaimer-box strong {
+        font-weight: 700;
+      }
+
+      .section {
+        margin: 30px 0;
+      }
+
+      .section h2 {
+        color: #495057;
+        font-size: 20px;
+        margin-bottom: 15px;
+        border-bottom: 2px solid #dee2e6;
+        padding-bottom: 8px;
+      }
+
+      .feature-list {
+        list-style: none;
+        padding: 0;
+      }
+
+      .feature-list li {
+        padding: 8px 0;
+        padding-left: 25px;
+        position: relative;
+      }
+
+      .feature-list li:before {
+        content: '✓';
+        position: absolute;
+        left: 0;
+        color: #28a745;
+        font-weight: bold;
+      }
+
+      .button {
+        display: inline-block;
+        padding: 10px 20px;
+        background-color: #007bff;
+        color: white;
+        text-decoration: none;
+        border-radius: 5px;
+        margin-top: 10px;
+      }
+
+      .button:hover {
+        background-color: #0069d9;
+      }
+
+      .footer {
+        margin-top: 50px;
+        padding-top: 20px;
+        border-top: 1px solid #dee2e6;
+        text-align: center;
+        color: #6c757d;
+        font-size: 13px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>📋 Promemoria Timbrature</h1>
+    <div class="version">Versione 2.0.0</div>
+
+    <div class="disclaimer-box">
+      <h2>⚠️ DISCLAIMER IMPORTANTE</h2>
+      <p>
+        Questa estensione è <strong>NON UFFICIALE</strong> e
+        <strong>NON è affiliata, approvata o connessa</strong> in alcun modo con Dipendenti in
+        Cloud, dipendentincloud.it o i suoi proprietari.
+      </p>
+      <p>
+        <strong>L'utente è completamente e unicamente responsabile</strong> delle proprie timbrature
+        e della gestione della propria presenza lavorativa.
+      </p>
+      <p>
+        Questa estensione è fornita "così com'è" come strumento di convenienza,
+        <strong>senza alcuna garanzia</strong> di funzionamento, accuratezza o affidabilità.
+      </p>
+      <p>Tutti i nomi di prodotti, loghi e marchi sono proprietà dei rispettivi proprietari.</p>
+    </div>
+
+    <div class="section">
+      <h2>🎯 Cosa fa questa estensione</h2>
+      <p>
+        Promemoria Timbrature è uno strumento personale che ti aiuta a ricordare di timbrare su
+        dipendentincloud.it attraverso:
+      </p>
+      <ul class="feature-list">
+        <li>Visualizzazione dello stato della timbratura</li>
+        <li>Notifiche e promemoria sonori</li>
+        <li>Countdown fino alla prossima timbratura</li>
+        <li>Storico delle timbrature del giorno</li>
+        <li>Timbratura rapida dal popup</li>
+        <li>Gestione giorni festivi e permessi</li>
+      </ul>
+    </div>
+
+    <div class="section">
+      <h2>🔒 Privacy e Sicurezza</h2>
+      <p>Questa estensione:</p>
+      <ul class="feature-list">
+        <li>NON raccoglie dati personali</li>
+        <li>NON invia dati a server esterni</li>
+        <li>NON accede alle tue credenziali</li>
+        <li>Legge solo informazioni pubbliche dalla pagina web</li>
+        <li>Salva le impostazioni solo localmente sul tuo browser</li>
+      </ul>
+    </div>
+
+    <div class="section">
+      <h2>📝 Licenza</h2>
+      <p>
+        Questo software è rilasciato sotto licenza MIT License.<br />
+        Il codice sorgente è disponibile su GitHub.
+      </p>
+    </div>
+
+    <div class="section">
+      <h2>🤝 Supporto</h2>
+      <p>Per problemi, domande o suggerimenti, visita la pagina GitHub del progetto.</p>
+      <a href="#" class="button">Apri Opzioni</a>
+    </div>
+
+    <div class="footer">
+      <p>Promemoria Timbrature v2.0.0</p>
+      <p>Estensione non ufficiale per uso personale</p>
+    </div>
+
+    <script>
+      document.querySelector('.button').addEventListener('click', function (e) {
+        e.preventDefault();
+        chrome.runtime.openOptionsPage();
+      });
+    </script>
+  </body>
 </html>
