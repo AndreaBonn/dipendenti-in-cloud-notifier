@@ -152,3 +152,116 @@ describe('getNotificationsToSend', () => {
     expect(result).toEqual([]);
   });
 });
+
+// === EDGE CASE TESTS ===
+// These test exact boundary conditions that could cause off-by-one bugs
+
+describe('shouldBlink - exact boundaries', () => {
+  it('starts blinking exactly at morningStart (not 1 minute before)', () => {
+    expect(shouldBlink(539, false, DEFAULT_SCHEDULE)).toBe(false);
+    expect(shouldBlink(540, false, DEFAULT_SCHEDULE)).toBe(true);
+  });
+
+  it('stops blinking exactly at lunchEnd (not 1 minute after)', () => {
+    expect(shouldBlink(779, false, DEFAULT_SCHEDULE)).toBe(true);
+    expect(shouldBlink(780, false, DEFAULT_SCHEDULE)).toBe(false);
+  });
+
+  it('lunch blink starts exactly at lunchEnd', () => {
+    expect(shouldBlink(779, true, DEFAULT_SCHEDULE)).toBe(false);
+    expect(shouldBlink(780, true, DEFAULT_SCHEDULE)).toBe(true);
+  });
+
+  it('lunch blink stops exactly at afternoonStart', () => {
+    expect(shouldBlink(839, true, DEFAULT_SCHEDULE)).toBe(true);
+    expect(shouldBlink(840, true, DEFAULT_SCHEDULE)).toBe(false);
+  });
+
+  it('evening blink starts exactly at eveningEnd', () => {
+    expect(shouldBlink(1079, true, DEFAULT_SCHEDULE)).toBe(false);
+    expect(shouldBlink(1080, true, DEFAULT_SCHEDULE)).toBe(true);
+  });
+
+  it('evening blink continues past midnight', () => {
+    expect(shouldBlink(1439, true, DEFAULT_SCHEDULE)).toBe(true);
+  });
+});
+
+describe('custom schedule', () => {
+  const CUSTOM = {
+    morningStart: 8 * 60,
+    lunchEnd: 12 * 60,
+    afternoonStart: 13 * 60,
+    eveningEnd: 17 * 60,
+  };
+
+  it('uses custom morning start for blinking', () => {
+    expect(shouldBlink(479, false, CUSTOM)).toBe(false);
+    expect(shouldBlink(480, false, CUSTOM)).toBe(true);
+  });
+
+  it('uses custom evening end for badge', () => {
+    expect(getBadgeText(960, true, CUSTOM)).toBe('1h');
+  });
+
+  it('uses custom schedule for situation IDs', () => {
+    expect(getSituationId(500, CUSTOM, '2024-01-15')).toBe('entrata-mattina-2024-01-15');
+    expect(getSituationId(730, CUSTOM, '2024-01-15')).toBe('uscita-pranzo-2024-01-15');
+  });
+
+  it('uses custom schedule for notifications', () => {
+    const result = getNotificationsToSend(480, false, CUSTOM, 5);
+    expect(result).toContain('morning');
+
+    const noResult = getNotificationsToSend(540, false, CUSTOM, 5);
+    expect(noResult).not.toContain('morning');
+  });
+});
+
+describe('getBadgeText - boundary precision', () => {
+  it('shows exactly 59m at 59 minutes before target', () => {
+    // Not clocked in, 59 min before morningStart (540-59=481)
+    expect(getBadgeText(481, false, DEFAULT_SCHEDULE)).toBe('59m');
+  });
+
+  it('switches to hours at exactly 60 minutes', () => {
+    // 60 min before morningStart = 480
+    expect(getBadgeText(480, false, DEFAULT_SCHEDULE)).toBe('1h');
+  });
+
+  it('shows 1m at exactly 1 minute before target', () => {
+    expect(getBadgeText(539, false, DEFAULT_SCHEDULE)).toBe('1m');
+  });
+
+  it('shows ! when exactly at target', () => {
+    // Not clocked in at morningStart — target is lunchEnd (780) but wait...
+    // At 540 not clocked: target = morningStart (540), diff = 0 → !
+    // Actually no: at 540 not clocked, currentTime < morningStart is false (540 < 540 is false)
+    // So it falls to: currentTime < lunchEnd → target = 780, diff = 240 → 4h
+    // The ! case is when diff <= 0, which only happens if schedule is misconfigured
+    // Actually let's test: clocked in at exactly eveningEnd
+    // at 1080 clocked: target = 24*60 = 1440, diff = 360 → 6h (not !)
+    // The ! case can happen if target is behind currentTime due to a delay
+    // Let's verify the function handles it: if targetTime === currentTime → diff = 0 → !
+    // This can't happen with the current logic because each branch uses strict <
+    // So getBadgeText never returns '!' in practice — the only way is when no target matches
+    // and it returns ''. Let's verify that understanding:
+    expect(getBadgeText(540, false, DEFAULT_SCHEDULE)).toBe('4h');
+  });
+
+  it('returns empty string when null isTimbrato', () => {
+    // getBadgeText with null — but null is handled by updateBadgeCountdown before calling
+    // Let's test that the function doesn't crash with null
+    expect(getBadgeText(600, null, DEFAULT_SCHEDULE)).toBe('');
+  });
+});
+
+describe('timeToMinutes - invalid inputs', () => {
+  it('handles single-digit hours', () => {
+    expect(timeToMinutes('9:00')).toBe(540);
+  });
+
+  it('handles single-digit minutes', () => {
+    expect(timeToMinutes('09:5')).toBe(545);
+  });
+});

@@ -1,3 +1,11 @@
+import {
+  timeToMinutes,
+  getSituationId,
+  shouldBlink,
+  getBadgeText,
+  getNotificationsToSend,
+} from './src/time-utils.js';
+
 const DEBUG = false;
 function log(...args) {
   if (DEBUG) console.log(...args);
@@ -46,12 +54,6 @@ function loadWorkSchedule(callback) {
       if (callback) callback();
     }
   );
-}
-
-// Converte HH:MM in minuti
-function timeToMinutes(timeStr) {
-  const [hours, minutes] = timeStr.split(':').map(Number);
-  return hours * 60 + minutes;
 }
 
 // Funzione per inviare notifica desktop
@@ -124,7 +126,7 @@ function setIcon(state) {
   chrome.action.setBadgeBackgroundColor({ color: badgeColors[state] || badgeColors.na });
 }
 
-// Funzione per aggiornare il badge con il countdown
+// Funzione per aggiornare il badge con il countdown (uses imported getBadgeText)
 function updateBadgeCountdown(isTimbrato) {
   if (isTimbrato === null) {
     chrome.action.setBadgeText({ text: '' });
@@ -133,53 +135,9 @@ function updateBadgeCountdown(isTimbrato) {
 
   loadWorkSchedule(function () {
     const now = new Date();
-    const hours = now.getHours();
-    const minutes = now.getMinutes();
-    const currentTime = hours * 60 + minutes;
-
-    let targetTime = null;
-
-    // Determina il prossimo evento usando orari personalizzati
-    if (isTimbrato === false) {
-      // Non timbrato - prossimo evento è l'entrata
-      if (currentTime < workSchedule.morningStart) {
-        targetTime = workSchedule.morningStart;
-      } else if (currentTime < workSchedule.lunchEnd) {
-        targetTime = workSchedule.lunchEnd;
-      } else if (currentTime < workSchedule.afternoonStart) {
-        targetTime = workSchedule.afternoonStart;
-      } else if (currentTime < workSchedule.eveningEnd) {
-        targetTime = workSchedule.eveningEnd;
-      }
-    } else if (isTimbrato === true) {
-      // Timbrato - prossimo evento è l'uscita
-      if (currentTime < workSchedule.lunchEnd) {
-        targetTime = workSchedule.lunchEnd;
-      } else if (currentTime < workSchedule.afternoonStart) {
-        targetTime = workSchedule.afternoonStart;
-      } else if (currentTime < workSchedule.eveningEnd) {
-        targetTime = workSchedule.eveningEnd;
-      } else {
-        targetTime = 24 * 60; // Fine giornata
-      }
-    }
-
-    if (targetTime) {
-      const diff = targetTime - currentTime;
-
-      if (diff <= 0) {
-        chrome.action.setBadgeText({ text: '!' });
-      } else if (diff < 60) {
-        // Meno di 1 ora: mostra minuti
-        chrome.action.setBadgeText({ text: diff + 'm' });
-      } else {
-        // Più di 1 ora: mostra ore
-        const hoursLeft = Math.floor(diff / 60);
-        chrome.action.setBadgeText({ text: hoursLeft + 'h' });
-      }
-    } else {
-      chrome.action.setBadgeText({ text: '' });
-    }
+    const currentTime = now.getHours() * 60 + now.getMinutes();
+    const text = getBadgeText(currentTime, isTimbrato, workSchedule);
+    chrome.action.setBadgeText({ text });
   });
 }
 
@@ -274,9 +232,8 @@ function startBlinking(baseState) {
   }, BLINK_INTERVAL_MS);
 }
 
-// Funzione per verificare se deve lampeggiare
+// Funzione per verificare se deve lampeggiare (uses imported shouldBlink)
 function checkShouldBlink(isTimbrato, callback) {
-  // Prima verifichiamo se oggi è escluso
   isExcludedDay(function (result) {
     if (result.excluded) {
       callback(false);
@@ -285,51 +242,29 @@ function checkShouldBlink(isTimbrato, callback) {
 
     loadWorkSchedule(function () {
       const now = new Date();
-      const hours = now.getHours();
-      const minutes = now.getMinutes();
-      const currentTime = hours * 60 + minutes;
+      const currentTime = now.getHours() * 60 + now.getMinutes();
 
-      // Usa gli orari personalizzati
-      const inizioMattina = workSchedule.morningStart;
-      const fineMattina = workSchedule.lunchEnd;
-      const inizioPranzo = workSchedule.lunchEnd;
-      const finePranzo = workSchedule.afternoonStart;
-      const inizioPomeriggio = workSchedule.afternoonStart;
-      const finePomeriggio = workSchedule.eveningEnd;
-
-      // Verifica e invia notifiche
       checkAndSendNotifications(currentTime, isTimbrato);
-
-      // 09:00-13:00: Se sei ROSSO (non timbrato) → lampeggia (non hai timbrato l'entrata mattina)
-      if (currentTime >= inizioMattina && currentTime < fineMattina && isTimbrato === false) {
-        callback(true);
-        return;
-      }
-
-      // 13:00-14:00: Se sei VERDE (timbrato) → lampeggia (non hai timbrato l'uscita pranzo)
-      if (currentTime >= inizioPranzo && currentTime < finePranzo && isTimbrato === true) {
-        callback(true);
-        return;
-      }
-
-      // 14:00-18:00: Se sei ROSSO (non timbrato) → lampeggia (non hai timbrato l'entrata pomeriggio)
-      if (currentTime >= inizioPomeriggio && currentTime < finePomeriggio && isTimbrato === false) {
-        callback(true);
-        return;
-      }
-
-      // 18:00+: Se sei VERDE (timbrato) → lampeggia (non hai timbrato l'uscita serale)
-      if (currentTime >= finePomeriggio && isTimbrato === true) {
-        callback(true);
-        return;
-      }
-
-      callback(false);
+      callback(shouldBlink(currentTime, isTimbrato, workSchedule));
     });
   });
 }
 
-// Funzione per controllare e inviare notifiche
+// Notification messages for each time slot
+const NOTIFICATION_MESSAGES = {
+  morning: { title: 'TIMBRA ENTRATA', message: "Buongiorno! È ora di timbrare l'entrata" },
+  lunch: {
+    title: 'TIMBRA INIZIO PAUSA PRANZO',
+    message: "È ora di timbrare l'uscita per la pausa pranzo",
+  },
+  afternoon: {
+    title: 'TIMBRA FINE PAUSA PRANZO',
+    message: 'È ora di timbrare il rientro dalla pausa pranzo',
+  },
+  evening: { title: 'TIMBRA USCITA', message: "È ora di timbrare l'uscita" },
+};
+
+// Funzione per controllare e inviare notifiche (uses imported getNotificationsToSend)
 function checkAndSendNotifications(currentTime, isTimbrato) {
   const today = new Date().toDateString();
 
@@ -338,76 +273,28 @@ function checkAndSendNotifications(currentTime, isTimbrato) {
     notificationsSent = { date: today };
   }
 
-  // Notifica per entrata mattina
-  if (
-    isTimbrato === false &&
-    !notificationsSent.morning &&
-    currentTime >= workSchedule.morningStart &&
-    currentTime < workSchedule.morningStart + NOTIFICATION_WINDOW_MINUTES
-  ) {
-    sendNotification('TIMBRA ENTRATA', "Buongiorno! È ora di timbrare l'entrata", true);
-    notificationsSent.morning = true;
-  }
+  const toSend = getNotificationsToSend(
+    currentTime,
+    isTimbrato,
+    workSchedule,
+    NOTIFICATION_WINDOW_MINUTES
+  );
 
-  // Notifica per inizio pausa pranzo
-  if (
-    isTimbrato === true &&
-    !notificationsSent.lunch &&
-    currentTime >= workSchedule.lunchEnd &&
-    currentTime < workSchedule.lunchEnd + NOTIFICATION_WINDOW_MINUTES
-  ) {
-    sendNotification(
-      'TIMBRA INIZIO PAUSA PRANZO',
-      "È ora di timbrare l'uscita per la pausa pranzo",
-      true
-    );
-    notificationsSent.lunch = true;
-  }
-
-  // Notifica per fine pausa pranzo (entrata pomeriggio)
-  if (
-    isTimbrato === false &&
-    !notificationsSent.afternoon &&
-    currentTime >= workSchedule.afternoonStart &&
-    currentTime < workSchedule.afternoonStart + NOTIFICATION_WINDOW_MINUTES
-  ) {
-    sendNotification(
-      'TIMBRA FINE PAUSA PRANZO',
-      'È ora di timbrare il rientro dalla pausa pranzo',
-      true
-    );
-    notificationsSent.afternoon = true;
-  }
-
-  // Notifica per uscita serale
-  if (
-    isTimbrato === true &&
-    !notificationsSent.evening &&
-    currentTime >= workSchedule.eveningEnd &&
-    currentTime < workSchedule.eveningEnd + NOTIFICATION_WINDOW_MINUTES
-  ) {
-    sendNotification('TIMBRA USCITA', "È ora di timbrare l'uscita", true);
-    notificationsSent.evening = true;
-  }
+  toSend.forEach(function (key) {
+    if (!notificationsSent[key]) {
+      const msg = NOTIFICATION_MESSAGES[key];
+      sendNotification(msg.title, msg.message, true);
+      notificationsSent[key] = true;
+    }
+  });
 }
 
-// Funzione per ottenere l'identificatore della situazione corrente
+// Wrapper: uses imported getSituationId with current time
 function getCurrentSituationId() {
   const now = new Date();
-  const dateStr = now.toISOString().split('T')[0]; // YYYY-MM-DD
+  const dateStr = now.toISOString().split('T')[0];
   const currentTime = now.getHours() * 60 + now.getMinutes();
-
-  // Usa gli orari personalizzati
-  if (currentTime >= workSchedule.morningStart && currentTime < workSchedule.lunchEnd) {
-    return `entrata-mattina-${dateStr}`;
-  } else if (currentTime >= workSchedule.lunchEnd && currentTime < workSchedule.afternoonStart) {
-    return `uscita-pranzo-${dateStr}`;
-  } else if (currentTime >= workSchedule.afternoonStart && currentTime < workSchedule.eveningEnd) {
-    return `entrata-pomeriggio-${dateStr}`;
-  } else if (currentTime >= workSchedule.eveningEnd) {
-    return `uscita-serale-${dateStr}`;
-  }
-  return null;
+  return getSituationId(currentTime, workSchedule, dateStr);
 }
 
 // Gestione dei messaggi dal content script

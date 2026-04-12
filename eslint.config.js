@@ -22,6 +22,12 @@ export default [
     },
   },
   {
+    files: ['background.js', 'src/**/*.js'],
+    languageOptions: {
+      sourceType: 'module',
+    },
+  },
+  {
     ignores: ['node_modules/', 'eslint.config.js'],
   },
 ];
