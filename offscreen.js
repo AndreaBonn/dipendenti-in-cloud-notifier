@@ -117,9 +117,6 @@ function createTone(ctx, frequency, duration, startTime, volume, type = 'sine') 
 
 // Funzione helper per creare un tono "campanella" con armoniche
 function createBellTone(ctx, frequency, duration, startTime, volume) {
-  const start = ctx.currentTime + startTime;
-  const end = start + duration;
-
   // Frequenza fondamentale
   createTone(ctx, frequency, duration, startTime, volume * 0.6, 'sine');
 
@@ -146,6 +143,9 @@ function playSound(soundType = 'classic', volume = 0.5) {
 
 // Ascoltiamo i messaggi dal background script
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  // Accetta solo messaggi dall'estensione stessa
+  if (sender.id !== chrome.runtime.id) return;
+
   if (request.action === 'playSound') {
     const soundType = request.soundType || 'classic';
     const volume = request.volume !== undefined ? request.volume : 0.5;

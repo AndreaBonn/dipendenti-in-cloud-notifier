@@ -1,3 +1,5 @@
+import { checkExclusion } from './src/time-utils.js';
+
 document.addEventListener('DOMContentLoaded', function () {
   const statusContainer = document.getElementById('status-container');
   const statusElement = document.getElementById('status');
@@ -90,7 +92,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
-  // Funzione per verificare se oggi è escluso
+  // Funzione per verificare se oggi è escluso (usa logica condivisa da time-utils.js)
   function checkExcludedDay(callback) {
     chrome.storage.local.get(
       {
@@ -100,31 +102,35 @@ document.addEventListener('DOMContentLoaded', function () {
       },
       function (options) {
         const now = new Date();
-        const day = now.getDay();
-        const today = now.toISOString().split('T')[0];
+        const result = checkExclusion({
+          dayOfWeek: now.getDay(),
+          dateStr: now.toISOString().split('T')[0],
+          currentMinutes: now.getHours() * 60 + now.getMinutes(),
+          excludeWeekends: options.excludeWeekends,
+          fullDayExclusions: options.fullDayExclusions,
+          halfDayExclusions: options.halfDayExclusions,
+          checkTime: false, // popup mostra l'esclusione a prescindere dall'ora
+        });
 
-        if (options.excludeWeekends && (day === 0 || day === 6)) {
-          callback({ excluded: true, reason: 'Weekend' });
+        if (!result.excluded) {
+          callback({ excluded: false });
           return;
         }
 
-        const fullDay = options.fullDayExclusions.find((e) => e.date === today);
-        if (fullDay) {
-          callback({ excluded: true, reason: fullDay.description || 'Giornata esclusa' });
-          return;
+        // Mappa reason tecnica → testo user-friendly per il popup
+        let displayReason;
+        if (result.reason === 'weekend') {
+          displayReason = 'Weekend';
+        } else if (result.reason === 'fullDay') {
+          displayReason = result.description || 'Giornata esclusa';
+        } else if (result.reason === 'halfDay') {
+          const period = result.period === 'morning' ? 'Mattina' : 'Pomeriggio';
+          displayReason = `${period} escluso${result.description ? ' - ' + result.description : ''}`;
+        } else {
+          displayReason = 'Escluso';
         }
 
-        const halfDay = options.halfDayExclusions.find((e) => e.date === today);
-        if (halfDay) {
-          const period = halfDay.period === 'morning' ? 'Mattina' : 'Pomeriggio';
-          callback({
-            excluded: true,
-            reason: `${period} escluso${halfDay.description ? ' - ' + halfDay.description : ''}`,
-          });
-          return;
-        }
-
-        callback({ excluded: false });
+        callback({ excluded: true, reason: displayReason });
       }
     );
   }
@@ -149,9 +155,40 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // Funzione per avviare il timer del countdown
   function startCountdownTimer(isTimbrato) {
+    // Leggo gli orari configurati dall'utente (una sola volta, non ad ogni tick)
+    chrome.storage.local.get(
+      {
+        morningStart: '09:00',
+        lunchEnd: '13:00',
+        afternoonStart: '14:00',
+        eveningEnd: '18:00',
+      },
+      function (schedule) {
+        const mStart = parseTimeToHoursMinutes(schedule.morningStart);
+        const lEnd = parseTimeToHoursMinutes(schedule.lunchEnd);
+        const aStart = parseTimeToHoursMinutes(schedule.afternoonStart);
+        const eEnd = parseTimeToHoursMinutes(schedule.eveningEnd);
+
+        startCountdownWithSchedule(isTimbrato, mStart, lEnd, aStart, eEnd);
+      }
+    );
+  }
+
+  // Converte "HH:MM" → {h, m}
+  function parseTimeToHoursMinutes(timeStr) {
+    const [h, m] = timeStr.split(':').map(Number);
+    return { h, m };
+  }
+
+  function startCountdownWithSchedule(isTimbrato, mStart, lEnd, aStart, eEnd) {
     countdownInterval = setInterval(() => {
       const now = new Date();
-      const hours = now.getHours();
+      const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+      const morningStartMin = mStart.h * 60 + mStart.m;
+      const lunchEndMin = lEnd.h * 60 + lEnd.m;
+      const afternoonStartMin = aStart.h * 60 + aStart.m;
+      const eveningEndMin = eEnd.h * 60 + eEnd.m;
 
       let targetTime;
       let targetLabel;
@@ -160,26 +197,26 @@ document.addEventListener('DOMContentLoaded', function () {
       // Determiniamo il prossimo evento in base allo stato e all'orario
       if (isTimbrato === false) {
         // Non timbrato - prossimo evento è l'entrata
-        if (hours < 9) {
+        if (currentMinutes < morningStartMin) {
           targetTime = new Date(now);
-          targetTime.setHours(9, 0, 0, 0);
+          targetTime.setHours(mStart.h, mStart.m, 0, 0);
           targetLabel = 'Entrata Mattina';
           isUrgent = false;
-        } else if (hours < 13) {
+        } else if (currentMinutes < lunchEndMin) {
           targetTime = new Date(now);
-          targetTime.setHours(13, 0, 0, 0);
+          targetTime.setHours(lEnd.h, lEnd.m, 0, 0);
           targetLabel = 'Entrata Mattina (scadenza)';
-          isUrgent = hours >= 9;
-        } else if (hours < 14) {
+          isUrgent = currentMinutes >= morningStartMin;
+        } else if (currentMinutes < afternoonStartMin) {
           targetTime = new Date(now);
-          targetTime.setHours(14, 0, 0, 0);
+          targetTime.setHours(aStart.h, aStart.m, 0, 0);
           targetLabel = 'Entrata Pomeriggio';
           isUrgent = false;
-        } else if (hours < 18) {
+        } else if (currentMinutes < eveningEndMin) {
           targetTime = new Date(now);
-          targetTime.setHours(18, 0, 0, 0);
+          targetTime.setHours(eEnd.h, eEnd.m, 0, 0);
           targetLabel = 'Entrata Pomeriggio (scadenza)';
-          isUrgent = hours >= 14;
+          isUrgent = currentMinutes >= afternoonStartMin;
         } else {
           countdownElement.textContent = 'Fuori Orario Lavorativo';
           countdownElement.className = 'countdown';
@@ -187,19 +224,19 @@ document.addEventListener('DOMContentLoaded', function () {
         }
       } else if (isTimbrato === true) {
         // Timbrato - prossimo evento è l'uscita
-        if (hours < 13) {
+        if (currentMinutes < lunchEndMin) {
           targetTime = new Date(now);
-          targetTime.setHours(13, 0, 0, 0);
+          targetTime.setHours(lEnd.h, lEnd.m, 0, 0);
           targetLabel = 'Uscita Pranzo';
           isUrgent = false;
-        } else if (hours < 14) {
+        } else if (currentMinutes < afternoonStartMin) {
           targetTime = new Date(now);
-          targetTime.setHours(14, 0, 0, 0);
+          targetTime.setHours(aStart.h, aStart.m, 0, 0);
           targetLabel = 'Uscita Pranzo (scadenza)';
-          isUrgent = hours >= 13;
-        } else if (hours < 18) {
+          isUrgent = currentMinutes >= lunchEndMin;
+        } else if (currentMinutes < eveningEndMin) {
           targetTime = new Date(now);
-          targetTime.setHours(18, 0, 0, 0);
+          targetTime.setHours(eEnd.h, eEnd.m, 0, 0);
           targetLabel = 'Uscita Serale';
           isUrgent = false;
         } else {
