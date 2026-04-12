@@ -15,6 +15,7 @@ GUIDA_OPZIONI.md
 *.env.production
 .env
 .env.*
+!.env.example
 config.local.js
 secrets.json
 credentials.json
