@@ -240,10 +240,9 @@ document.addEventListener('DOMContentLoaded', function () {
           targetLabel = 'Uscita Serale';
           isUrgent = false;
         } else {
-          targetTime = new Date(now);
-          targetTime.setHours(23, 59, 59, 0);
-          targetLabel = 'Uscita Serale (SCADUTO!)';
-          isUrgent = true;
+          countdownElement.textContent = 'Uscita Serale — SCADUTO!';
+          countdownElement.className = 'countdown urgent';
+          return;
         }
       } else {
         countdownElement.textContent = '';
