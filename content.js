@@ -1,5 +1,5 @@
 const DEBUG = false;
-function log(...args) { if (DEBUG) log(...args); }
+function log(...args) { if (DEBUG) console.log(...args); }
 
 // Funzione per estrarre le timbrature di oggi
 function extractTimbratureOggi() {

@@ -1,15 +1,22 @@
 const DEBUG = false;
-function log(...args) { if (DEBUG) log(...args); }
+function log(...args) { if (DEBUG) console.log(...args); }
 
-// Variabili per gestire il lampeggiamento
+// Timing constants
+const SOUND_REPEAT_MS = 5 * 60 * 1000;
+const BLINK_INTERVAL_MS = 500;
+const STATUS_CHECK_MS = 30 * 1000;
+const BADGE_UPDATE_MS = 60 * 1000;
+const NOTIFICATION_WINDOW_MINUTES = 5;
+const NOTIFICATION_AUTO_CLOSE_MS = 10 * 1000;
+const STARTUP_DELAY_MS = 2000;
+
+// State
 let blinkInterval = null;
 let currentIconState = 'na';
 let isBlinking = false;
 
-// Variabili per gestire il suono
 let soundInterval = null;
 let lastSoundTime = null;
-const SOUND_REPEAT_INTERVAL = 5 * 60 * 1000; // 5 minuti in millisecondi
 
 // Variabili per gestire le notifiche
 let notificationsSent = {};
@@ -70,7 +77,7 @@ function sendNotification(title, message, urgent = false) {
       if (!urgent) {
         setTimeout(() => {
           chrome.notifications.clear(notificationId);
-        }, 10000);
+        }, NOTIFICATION_AUTO_CLOSE_MS);
       }
     });
   });
@@ -231,7 +238,7 @@ function startSound() {
   soundInterval = setInterval(() => {
     playNotificationSound();
     lastSoundTime = Date.now();
-  }, SOUND_REPEAT_INTERVAL);
+  }, SOUND_REPEAT_MS);
 }
 
 // Funzione per fermare il lampeggiamento
@@ -256,7 +263,7 @@ function startBlinking(baseState) {
       setIcon('na');
     }
     showIcon = !showIcon;
-  }, 500); // Lampeggia ogni 500ms
+  }, BLINK_INTERVAL_MS);
 }
 
 // Funzione per verificare se deve lampeggiare
@@ -325,28 +332,28 @@ function checkAndSendNotifications(currentTime, isTimbrato) {
 
   // Notifica per entrata mattina
   if (isTimbrato === false && !notificationsSent.morning &&
-    currentTime >= workSchedule.morningStart && currentTime < workSchedule.morningStart + 5) {
+    currentTime >= workSchedule.morningStart && currentTime < workSchedule.morningStart + NOTIFICATION_WINDOW_MINUTES) {
     sendNotification('TIMBRA ENTRATA', 'Buongiorno! È ora di timbrare l\'entrata', true);
     notificationsSent.morning = true;
   }
 
   // Notifica per inizio pausa pranzo
   if (isTimbrato === true && !notificationsSent.lunch &&
-    currentTime >= workSchedule.lunchEnd && currentTime < workSchedule.lunchEnd + 5) {
+    currentTime >= workSchedule.lunchEnd && currentTime < workSchedule.lunchEnd + NOTIFICATION_WINDOW_MINUTES) {
     sendNotification('TIMBRA INIZIO PAUSA PRANZO', 'È ora di timbrare l\'uscita per la pausa pranzo', true);
     notificationsSent.lunch = true;
   }
 
   // Notifica per fine pausa pranzo (entrata pomeriggio)
   if (isTimbrato === false && !notificationsSent.afternoon &&
-    currentTime >= workSchedule.afternoonStart && currentTime < workSchedule.afternoonStart + 5) {
+    currentTime >= workSchedule.afternoonStart && currentTime < workSchedule.afternoonStart + NOTIFICATION_WINDOW_MINUTES) {
     sendNotification('TIMBRA FINE PAUSA PRANZO', 'È ora di timbrare il rientro dalla pausa pranzo', true);
     notificationsSent.afternoon = true;
   }
 
   // Notifica per uscita serale
   if (isTimbrato === true && !notificationsSent.evening &&
-    currentTime >= workSchedule.eveningEnd && currentTime < workSchedule.eveningEnd + 5) {
+    currentTime >= workSchedule.eveningEnd && currentTime < workSchedule.eveningEnd + NOTIFICATION_WINDOW_MINUTES) {
     sendNotification('TIMBRA USCITA', 'È ora di timbrare l\'uscita', true);
     notificationsSent.evening = true;
   }
@@ -523,7 +530,7 @@ setInterval(() => {
       });
     }
   });
-}, 30000); // Controlliamo ogni 30 secondi
+}, STATUS_CHECK_MS);
 
 // Aggiorna il badge ogni minuto per il countdown
 setInterval(() => {
@@ -532,7 +539,7 @@ setInterval(() => {
       updateBadgeCountdown(data.timbratureStatus.isTimbrato);
     }
   });
-}, 60000); // Aggiorniamo ogni minuto
+}, BADGE_UPDATE_MS);
 
 // Funzione per verificare se oggi è escluso
 function isExcludedDay(callback) {
@@ -632,7 +639,7 @@ function checkStatusOnStartup() {
           // Aspettiamo 2 secondi per dare tempo a Chrome di caricarsi completamente
           setTimeout(() => {
             openDipendentiInCloud();
-          }, 2000);
+          }, STARTUP_DELAY_MS);
         }
       });
     }
