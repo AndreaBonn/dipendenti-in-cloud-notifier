@@ -7,7 +7,9 @@
     "lint": "eslint *.js",
     "lint:fix": "eslint *.js --fix",
     "format": "prettier --write '*.{js,css,html,json,md}'",
-    "format:check": "prettier --check '*.{js,css,html,json,md}'"
+    "format:check": "prettier --check '*.{js,css,html,json,md}'",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "repository": {
     "type": "git",
@@ -23,6 +25,7 @@
     "@eslint/js": "^10.0.1",
     "eslint": "^10.2.0",
     "globals": "^17.5.0",
-    "prettier": "^3.8.2"
+    "prettier": "^3.8.2",
+    "vitest": "^4.1.4"
   }
 }
