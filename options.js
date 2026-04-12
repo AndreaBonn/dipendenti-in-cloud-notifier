@@ -1,3 +1,39 @@
+// Toast notification system (replaces alert/confirm)
+function showToast(message, type = 'info', duration = 4000) {
+  const container = document.getElementById('toastContainer');
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  toast.textContent = message;
+  toast.addEventListener('click', function() { toast.remove(); });
+  container.appendChild(toast);
+  setTimeout(function() { toast.remove(); }, duration);
+}
+
+function showConfirm(message) {
+  return new Promise(function(resolve) {
+    const overlay = document.getElementById('confirmOverlay');
+    const messageEl = document.getElementById('confirmMessage');
+    const yesBtn = document.getElementById('confirmYes');
+    const noBtn = document.getElementById('confirmNo');
+
+    messageEl.textContent = message;
+    overlay.classList.add('active');
+
+    function cleanup(result) {
+      overlay.classList.remove('active');
+      yesBtn.removeEventListener('click', onYes);
+      noBtn.removeEventListener('click', onNo);
+      resolve(result);
+    }
+
+    function onYes() { cleanup(true); }
+    function onNo() { cleanup(false); }
+
+    yesBtn.addEventListener('click', onYes);
+    noBtn.addEventListener('click', onNo);
+  });
+}
+
 // Carica le opzioni salvate
 function loadOptions() {
   chrome.storage.local.get({
@@ -137,16 +173,16 @@ function addFullDayExclusion() {
   const descriptionInput = document.getElementById('fullDayDescription');
   
   if (!dateInput.value) {
-    alert('Seleziona una data');
+    showToast('Seleziona una data', 'warning');
     return;
   }
-  
+
   chrome.storage.local.get({ fullDayExclusions: [] }, function(items) {
     const exclusions = items.fullDayExclusions;
-    
+
     // Verifica se la data esiste già
     if (exclusions.some(e => e.date === dateInput.value)) {
-      alert('Questa data è già stata aggiunta');
+      showToast('Questa data è già stata aggiunta', 'warning');
       return;
     }
     
@@ -170,16 +206,16 @@ function addHalfDayExclusion() {
   const descriptionInput = document.getElementById('halfDayDescription');
   
   if (!dateInput.value) {
-    alert('Seleziona una data');
+    showToast('Seleziona una data', 'warning');
     return;
   }
-  
+
   chrome.storage.local.get({ halfDayExclusions: [] }, function(items) {
     const exclusions = items.halfDayExclusions;
-    
+
     // Verifica se la data e periodo esistono già
     if (exclusions.some(e => e.date === dateInput.value && e.period === periodInput.value)) {
-      alert('Questa mezza giornata è già stata aggiunta');
+      showToast('Questa mezza giornata è già stata aggiunta', 'warning');
       return;
     }
     
@@ -271,37 +307,38 @@ function importAssenze() {
   // Cerca una tab con Dipendenti in Cloud aperta
   chrome.tabs.query({ url: '*://secure.dipendentincloud.it/*' }, function(tabs) {
     if (tabs.length === 0) {
-      const openNow = confirm('⚠️ Nessuna pagina di Dipendenti in Cloud aperta.\n\nVuoi aprire la pagina ora?');
-      if (openNow) {
-        chrome.tabs.create({ url: 'https://secure.dipendentincloud.it/it/app/dashboard' }, function(newTab) {
-          alert('✓ Pagina aperta!\n\nAttendi che si carichi, poi clicca di nuovo "Importa da Dipendenti in Cloud".');
-        });
-      }
-      importButton.disabled = false;
-      importButton.textContent = '📥 Importa da Dipendenti in Cloud';
+      showConfirm('Nessuna pagina di Dipendenti in Cloud aperta. Vuoi aprire la pagina ora?').then(function(openNow) {
+        if (openNow) {
+          chrome.tabs.create({ url: 'https://secure.dipendentincloud.it/it/app/dashboard' }, function() {
+            showToast('Pagina aperta! Attendi il caricamento, poi clicca di nuovo "Importa".', 'success', 5000);
+          });
+        }
+        importButton.disabled = false;
+        importButton.textContent = '📥 Importa da Dipendenti in Cloud';
+      });
       return;
     }
-    
+
     const tab = tabs[0];
     chrome.tabs.sendMessage(tab.id, { action: 'extractAssenze' }, function(response) {
       importButton.disabled = false;
       importButton.textContent = '📥 Importa da Dipendenti in Cloud';
-      
+
       if (chrome.runtime.lastError) {
-        alert('⚠️ Errore di comunicazione con la pagina.\n\nProva a:\n1. Ricaricare la pagina di Dipendenti in Cloud\n2. Ricaricare questa pagina di opzioni\n3. Riprovare l\'importazione');
+        showToast('Errore di comunicazione. Ricarica la pagina di Dipendenti in Cloud e riprova.', 'error', 5000);
         return;
       }
-      
+
       if (!response || !response.success) {
-        alert('⚠️ Errore durante l\'estrazione delle assenze.\n\nAssicurati di essere nella pagina corretta di Dipendenti in Cloud.');
+        showToast('Errore durante l\'estrazione. Assicurati di essere nella pagina corretta.', 'error', 5000);
         return;
       }
-      
+
       if (response.assenze.length === 0) {
-        alert('ℹ️ Nessuna assenza trovata nei prossimi 7 giorni.\n\nSe hai assenze programmate oltre i prossimi 7 giorni, dovrai aggiungerle manualmente usando il form qui sotto.');
+        showToast('Nessuna assenza trovata nei prossimi 7 giorni. Aggiungi manualmente le date future.', 'info', 5000);
         return;
       }
-      
+
       // Mostra il modal con le assenze trovate
       showImportModal(response.assenze);
     });
@@ -382,7 +419,7 @@ function confirmImport() {
   const checkboxes = document.querySelectorAll('#assenzeList input[type="checkbox"]:checked:not(:disabled)');
   
   if (checkboxes.length === 0) {
-    alert('Seleziona almeno un\'assenza da importare');
+    showToast('Seleziona almeno un\'assenza da importare', 'warning');
     return;
   }
   
@@ -410,7 +447,7 @@ function confirmImport() {
       renderFullDayExclusions(exclusions);
       
       // Mostra messaggio di successo
-      alert(`${checkboxes.length} assenze importate con successo!`);
+      showToast(`${checkboxes.length} assenze importate con successo!`, 'success');
     });
   });
 }
