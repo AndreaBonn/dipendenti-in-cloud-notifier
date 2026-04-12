@@ -311,8 +311,15 @@ function saveOptions() {
   const soundType = document.getElementById('soundType').value;
   const soundVolume = parseInt(document.getElementById('soundVolume').value);
 
-  // Validazione coerenza orari: morningStart < lunchEnd < afternoonStart < eveningEnd
+  // Validazione formato HH:MM
+  const TIME_REGEX = /^([01]\d|2[0-3]):[0-5]\d$/;
   const times = [morningStart, lunchEnd, afternoonStart, eveningEnd];
+  if (times.some((t) => !TIME_REGEX.test(t))) {
+    showToast('Formato orario non valido (richiesto HH:MM)', 'error');
+    return;
+  }
+
+  // Validazione coerenza orari: morningStart < lunchEnd < afternoonStart < eveningEnd
   for (let i = 0; i < times.length - 1; i++) {
     if (times[i] >= times[i + 1]) {
       showToast('Gli orari devono essere in ordine cronologico crescente', 'error');
@@ -504,13 +511,16 @@ function confirmImport() {
 
     checkboxes.forEach((checkbox) => {
       const date = checkbox.getAttribute('data-date');
-      const description = checkbox.getAttribute('data-description');
+      const description = checkbox.getAttribute('data-description') || '';
+
+      // Validate data from DOM attributes before persisting
+      if (!isValidDate(date)) return;
 
       // Verifica che non esista già
       if (!exclusions.some((e) => e.date === date)) {
         exclusions.push({
           date: date,
-          description: description,
+          description: sanitizeDescription(description),
         });
       }
     });

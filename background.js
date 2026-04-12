@@ -21,6 +21,9 @@ const NOTIFICATION_WINDOW_MINUTES = 5;
 const NOTIFICATION_AUTO_CLOSE_MS = 10 * 1000;
 const STARTUP_DELAY_MS = 2000;
 
+// Valid sound types whitelist
+const VALID_SOUND_TYPES = ['classic', 'urgent', 'gentle', 'bell', 'digital', 'alarm'];
+
 // State
 let blinkInterval = null;
 let isBlinking = false;
@@ -151,7 +154,6 @@ function playNotificationSound() {
     function (options) {
       if (!options.enableSound) return;
 
-      const VALID_SOUND_TYPES = ['classic', 'urgent', 'gentle', 'bell', 'digital', 'alarm'];
       const soundType = VALID_SOUND_TYPES.includes(options.soundType)
         ? options.soundType
         : 'classic';
@@ -172,13 +174,14 @@ function playNotificationSound() {
           });
         })
         .catch((error) => {
-          // Se il documento esiste già, inviamo solo il messaggio
           if (error.message.includes('Only a single offscreen')) {
             chrome.runtime.sendMessage({
               action: 'playSound',
               soundType: soundType,
               volume: volume,
             });
+          } else {
+            log('[Audio] Errore offscreen non recuperabile:', error.message);
           }
         });
     }
@@ -296,15 +299,21 @@ function getCurrentSituationId() {
   return getSituationId(currentTime, workSchedule, dateStr);
 }
 
+// Allowed origins for content script messages
+const ALLOWED_ORIGINS = ['https://secure.dipendentincloud.it', 'https://cloud.dipendentincloud.it'];
+
 // Gestione dei messaggi dal content script
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
   // Accetta solo messaggi dall'estensione stessa
   if (sender.id !== chrome.runtime.id) return;
 
+  // Defense-in-depth: validate origin for content script messages
+  if (sender.tab && !ALLOWED_ORIGINS.some((o) => sender.tab.url.startsWith(o))) return;
+
   if (request.action === 'testSound') {
-    // Test del suono dalle opzioni
-    const soundType = request.soundType || 'classic';
-    const volume = request.volume !== undefined ? request.volume : 0.5;
+    // Test del suono dalle opzioni — validate against whitelist
+    const soundType = VALID_SOUND_TYPES.includes(request.soundType) ? request.soundType : 'classic';
+    const volume = Math.max(0, Math.min(1, Number(request.volume) || 0.5));
 
     chrome.offscreen
       .createDocument({
@@ -326,6 +335,9 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
             soundType: soundType,
             volume: volume,
           });
+        } else {
+          log('[Audio] Errore test suono:', error.message);
+          sendResponse({ success: false, error: error.message });
         }
       });
 
@@ -531,6 +543,19 @@ function openDipendentiInCloud() {
   });
 }
 
+// Sync in-memory state from storage on service worker wake-up.
+// MV3 service workers are killed after ~30s of inactivity; on restart,
+// module-level variables reset to defaults while storage retains stale values.
+function syncStateOnWakeUp(callback) {
+  chrome.storage.local.get(['isBlinking'], function (data) {
+    if (data.isBlinking && !isBlinking) {
+      // Storage says blinking but worker just woke up — reset stale flag
+      chrome.storage.local.set({ isBlinking: false });
+    }
+    if (callback) callback();
+  });
+}
+
 // Funzione per controllare lo stato all'avvio
 function checkStatusOnStartup() {
   // Verifichiamo se l'apertura automatica è abilitata
@@ -628,21 +653,18 @@ function sendStartupNotification(isTimbrato) {
 
 // Quando l'estensione viene installata o aggiornata
 chrome.runtime.onInstalled.addListener(function () {
-  // Richiedi permesso notifiche
-  chrome.storage.local.get({ enableNotifications: true }, function (options) {
-    if (options.enableNotifications) {
-      // Le notifiche verranno richieste quando l'utente salva le opzioni
-    }
-  });
-
-  loadWorkSchedule(function () {
-    checkStatusOnStartup();
+  syncStateOnWakeUp(function () {
+    loadWorkSchedule(function () {
+      checkStatusOnStartup();
+    });
   });
 });
 
 // Quando Chrome si avvia o l'estensione viene ricaricata
 chrome.runtime.onStartup.addListener(function () {
-  loadWorkSchedule(function () {
-    checkStatusOnStartup();
+  syncStateOnWakeUp(function () {
+    loadWorkSchedule(function () {
+      checkStatusOnStartup();
+    });
   });
 });

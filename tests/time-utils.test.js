@@ -103,11 +103,9 @@ describe('getBadgeText', () => {
     expect(getBadgeText(600, true, DEFAULT_SCHEDULE)).toBe('3h');
   });
 
-  it('shows ! when past target', () => {
-    // Clocked in, past evening end (target is 24*60=1440, current 1440 → past midnight target)
-    // Actually: clocked in at 1100, target is eveningEnd=1080... wait that's already past
-    // Let me reconsider: at 1080 (eveningEnd), target becomes 24*60=1440, diff=360 → 6h
-    expect(getBadgeText(1080, true, DEFAULT_SCHEDULE)).toBe('6h');
+  it('shows ! when clocked in past evening end (overdue)', () => {
+    expect(getBadgeText(1080, true, DEFAULT_SCHEDULE)).toBe('!');
+    expect(getBadgeText(1200, true, DEFAULT_SCHEDULE)).toBe('!');
   });
 
   it('returns empty when no target applicable', () => {

@@ -50,7 +50,7 @@ function extractAssenze() {
 
   if (widgetContainer) {
     log('[Assenze] Trovato container widget assenze');
-    log('[Assenze] HTML del widget:', widgetContainer.innerHTML.substring(0, 500));
+    log('[Assenze] Testo del widget:', widgetContainer.textContent.substring(0, 500));
 
     // Verifica se c'è il messaggio "Non sono previste assenze"
     const emptyState = widgetContainer.querySelector('dic-week-widget-empty-state');

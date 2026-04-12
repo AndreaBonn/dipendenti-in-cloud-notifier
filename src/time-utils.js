@@ -61,7 +61,7 @@ export function getBadgeText(currentMinutes, isTimbrato, schedule) {
     if (currentMinutes < schedule.lunchEnd) targetTime = schedule.lunchEnd;
     else if (currentMinutes < schedule.afternoonStart) targetTime = schedule.afternoonStart;
     else if (currentMinutes < schedule.eveningEnd) targetTime = schedule.eveningEnd;
-    else targetTime = 24 * 60;
+    else return '!'; // Past evening end — overdue, no meaningful countdown target
   }
 
   if (targetTime === null) return '';
