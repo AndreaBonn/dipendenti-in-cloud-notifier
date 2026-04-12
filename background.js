@@ -1,3 +1,6 @@
+const DEBUG = false;
+function log(...args) { if (DEBUG) log(...args); }
+
 // Variabili per gestire il lampeggiamento
 let blinkInterval = null;
 let currentIconState = 'na';
@@ -61,7 +64,7 @@ function sendNotification(title, message, urgent = false) {
     };
 
     chrome.notifications.create('timbratura-' + Date.now(), notificationOptions, function (notificationId) {
-      console.log('[Notifica] Inviata:', title);
+      log('[Notifica] Inviata:', title);
 
       // Auto-chiudi dopo 10 secondi se non urgente
       if (!urgent) {
@@ -478,7 +481,7 @@ setInterval(() => {
         if (shouldBlink) {
           // Se la situazione è cambiata, riavvia il suono anche se già lampeggia
           if (situationChanged && currentSituationId) {
-            console.log('[Background] Situazione cambiata:', lastSituationId, '->', currentSituationId);
+            log('[Background] Situazione cambiata:', lastSituationId, '->', currentSituationId);
             chrome.storage.local.set({ lastSituationId: currentSituationId });
             
             // Rimuovi il vecchio silenziamento

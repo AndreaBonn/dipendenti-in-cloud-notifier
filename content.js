@@ -1,3 +1,6 @@
+const DEBUG = false;
+function log(...args) { if (DEBUG) log(...args); }
+
 // Funzione per estrarre le timbrature di oggi
 function extractTimbratureOggi() {
   const timbratureOggi = [];
@@ -25,14 +28,14 @@ function extractTimbratureOggi() {
   // Ordina le timbrature per orario
   timbratureOggi.sort();
   
-  console.log('[Timbratura] Timbrature oggi:', timbratureOggi);
+  log('[Timbratura] Timbrature oggi:', timbratureOggi);
   return timbratureOggi;
 }
 
 // Funzione per estrarre le assenze dalla pagina (dashboard - prossimi 7 giorni)
 function extractAssenze() {
-  console.log('[Assenze] Inizio estrazione assenze dalla dashboard (prossimi 7 giorni)...');
-  console.log('[Assenze] URL corrente:', window.location.href);
+  log('[Assenze] Inizio estrazione assenze dalla dashboard (prossimi 7 giorni)...');
+  log('[Assenze] URL corrente:', window.location.href);
   
   const assenze = [];
   
@@ -40,13 +43,13 @@ function extractAssenze() {
   const widgetContainer = document.querySelector('dic-dashboard-card-content, [class*="dashboard-card"]');
   
   if (widgetContainer) {
-    console.log('[Assenze] Trovato container widget assenze');
-    console.log('[Assenze] HTML del widget:', widgetContainer.innerHTML.substring(0, 500));
+    log('[Assenze] Trovato container widget assenze');
+    log('[Assenze] HTML del widget:', widgetContainer.innerHTML.substring(0, 500));
     
     // Verifica se c'è il messaggio "Non sono previste assenze"
     const emptyState = widgetContainer.querySelector('dic-week-widget-empty-state');
     if (emptyState) {
-      console.log('[Assenze] Trovato empty state - nessuna assenza nei prossimi 7 giorni');
+      log('[Assenze] Trovato empty state - nessuna assenza nei prossimi 7 giorni');
       return assenze; // Ritorna array vuoto
     }
     
@@ -54,7 +57,7 @@ function extractAssenze() {
     // Cerca tutti gli elementi che potrebbero contenere assenze
     const assenzeElements = widgetContainer.querySelectorAll('div, li, tr, [class*="item"], [class*="row"]');
     
-    console.log('[Assenze] Elementi nel widget:', assenzeElements.length);
+    log('[Assenze] Elementi nel widget:', assenzeElements.length);
     
     assenzeElements.forEach(el => {
       const text = el.textContent.trim();
@@ -63,14 +66,14 @@ function extractAssenze() {
       // Salta elementi vuoti o troppo lunghi (probabilmente container)
       if (!text || text.length > 200) return;
       
-      console.log('[Assenze] Analizzo elemento:', text.substring(0, 100));
+      log('[Assenze] Analizzo elemento:', text.substring(0, 100));
       
       // Cerca date nel formato gg/mm/aaaa o gg-mm-aaaa
       const datePattern = /(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{4})/g;
       const dateMatches = text.match(datePattern);
       
       if (dateMatches) {
-        console.log('[Assenze] Date trovate nell\'elemento:', dateMatches);
+        log('[Assenze] Date trovate nell\'elemento:', dateMatches);
         
         dateMatches.forEach(dateStr => {
           // Converti in formato ISO
@@ -92,7 +95,7 @@ function extractAssenze() {
           const sevenDaysFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
           
           if (date < now || date > sevenDaysFromNow) {
-            console.log('[Assenze] Data fuori range (prossimi 7 giorni):', isoDate);
+            log('[Assenze] Data fuori range (prossimi 7 giorni):', isoDate);
             return;
           }
           
@@ -114,7 +117,7 @@ function extractAssenze() {
           // Verifica se non è già presente
           const exists = assenze.some(a => a.date === isoDate);
           if (!exists) {
-            console.log('[Assenze] ✓ Trovata assenza valida:', isoDate, tipo);
+            log('[Assenze] ✓ Trovata assenza valida:', isoDate, tipo);
             assenze.push({
               date: isoDate,
               tipo: tipo,
@@ -125,15 +128,15 @@ function extractAssenze() {
       }
     });
   } else {
-    console.log('[Assenze] Widget assenze non trovato nella dashboard');
+    log('[Assenze] Widget assenze non trovato nella dashboard');
   }
   
   // Ordina per data
   assenze.sort((a, b) => new Date(a.date) - new Date(b.date));
   
-  console.log('[Assenze] ===== RISULTATO FINALE =====');
-  console.log('[Assenze] Totale assenze trovate:', assenze.length);
-  console.log('[Assenze] Dettaglio:', assenze);
+  log('[Assenze] ===== RISULTATO FINALE =====');
+  log('[Assenze] Totale assenze trovate:', assenze.length);
+  log('[Assenze] Dettaglio:', assenze);
   
   return assenze;
 }
@@ -149,7 +152,7 @@ function checkTimbratura() {
   if (document.location.href.includes('secure.dipendentincloud.it') || 
       document.location.href.includes('cloud.dipendentincloud.it')) {
     
-    console.log('[Timbratura] Inizio controllo stato...');
+    log('[Timbratura] Inizio controllo stato...');
     
     // Estrai le timbrature di oggi
     timbratureOggi = extractTimbratureOggi();
@@ -163,17 +166,17 @@ function checkTimbratura() {
       const text = button.textContent.trim().toLowerCase();
       if (text.includes('timbra entrata') || text.includes('entrata')) {
         timbraEntrataFound = true;
-        console.log('[Timbratura] Trovato bottone entrata');
+        log('[Timbratura] Trovato bottone entrata');
       }
       if (text.includes('timbra uscita') || text.includes('uscita')) {
         timbraUscitaFound = true;
-        console.log('[Timbratura] Trovato bottone uscita');
+        log('[Timbratura] Trovato bottone uscita');
       }
     });
     
     // Strategia 2: Conta le timbrature di oggi
     const timbratureElements = document.querySelectorAll('.timbratura, .sessione, [class*="timb"], [class*="punch"]');
-    console.log('[Timbratura] Trovati ' + timbratureElements.length + ' elementi timbratura');
+    log('[Timbratura] Trovati ' + timbratureElements.length + ' elementi timbratura');
     
     // Strategia 3: Cerca nella tabella/lista delle timbrature
     const today = new Date();
@@ -193,23 +196,23 @@ function checkTimbratura() {
       }
     });
     
-    console.log('[Timbratura] Numero timbrature oggi: ' + timbratureCount);
+    log('[Timbratura] Numero timbrature oggi: ' + timbratureCount);
     
     // Determina lo stato in base alle informazioni raccolte
     if (timbraUscitaFound) {
       // Se c'è il bottone "Timbra uscita", significa che l'entrata è stata timbrata
       isTimbrato = true;
-      console.log('[Timbratura] Stato: TIMBRATO (bottone uscita trovato)');
+      log('[Timbratura] Stato: TIMBRATO (bottone uscita trovato)');
     } else if (timbraEntrataFound) {
       // Se c'è il bottone "Timbra entrata", significa che non è stato timbrato
       isTimbrato = false;
-      console.log('[Timbratura] Stato: NON TIMBRATO (bottone entrata trovato)');
+      log('[Timbratura] Stato: NON TIMBRATO (bottone entrata trovato)');
     } else if (timbratureCount > 0) {
       // Se abbiamo trovato timbrature, determina lo stato dal numero
       // Numero dispari = timbrato (ultima è entrata)
       // Numero pari = non timbrato (ultima è uscita)
       isTimbrato = (timbratureCount % 2 === 1);
-      console.log('[Timbratura] Stato determinato da conteggio: ' + (isTimbrato ? 'TIMBRATO' : 'NON TIMBRATO'));
+      log('[Timbratura] Stato determinato da conteggio: ' + (isTimbrato ? 'TIMBRATO' : 'NON TIMBRATO'));
     } else {
       // Fallback: cerca elementi con classi specifiche
       const statusIndicators = document.querySelectorAll('[class*="status"], [class*="stato"], [class*="badge"]');
@@ -223,9 +226,9 @@ function checkTimbratura() {
       });
       
       if (isTimbrato !== null) {
-        console.log('[Timbratura] Stato determinato da indicatori: ' + (isTimbrato ? 'TIMBRATO' : 'NON TIMBRATO'));
+        log('[Timbratura] Stato determinato da indicatori: ' + (isTimbrato ? 'TIMBRATO' : 'NON TIMBRATO'));
       } else {
-        console.log('[Timbratura] Stato: SCONOSCIUTO (nessun indicatore trovato)');
+        log('[Timbratura] Stato: SCONOSCIUTO (nessun indicatore trovato)');
       }
     }
     
@@ -240,7 +243,7 @@ function checkTimbratura() {
     };
     
     chrome.storage.local.set({ 'timbratureStatus': statusData }, function() {
-      console.log('[Timbratura] Stato salvato:', statusData);
+      log('[Timbratura] Stato salvato:', statusData);
     });
     
     // Aggiorniamo l'icona dell'estensione
@@ -250,13 +253,13 @@ function checkTimbratura() {
         isTimbrato: isTimbrato
       });
     } catch (error) {
-      console.log('[Timbratura] Errore invio messaggio (estensione ricaricata?):', error);
+      log('[Timbratura] Errore invio messaggio (estensione ricaricata?):', error);
     }
   } else {
     // Se non siamo nella pagina corretta, recuperiamo lo stato dalla storage
     chrome.storage.local.get('timbratureStatus', function(data) {
       if (data && data.timbratureStatus) {
-        console.log('Stato timbratura recuperato dalla storage:', data.timbratureStatus);
+        log('Stato timbratura recuperato dalla storage:', data.timbratureStatus);
         
         // Aggiorniamo l'icona dell'estensione con lo stato memorizzato
         try {
@@ -265,7 +268,7 @@ function checkTimbratura() {
             isTimbrato: data.timbratureStatus.isTimbrato
           });
         } catch (error) {
-          console.log('[Timbratura] Errore invio messaggio (estensione ricaricata?):', error);
+          log('[Timbratura] Errore invio messaggio (estensione ricaricata?):', error);
         }
       }
     });
@@ -294,7 +297,7 @@ function setupObserver() {
     if (isRuntimeValid()) {
       checkTimbratura();
     } else {
-      console.log('[Timbratura] Estensione ricaricata, ricarica la pagina per riattivare');
+      log('[Timbratura] Estensione ricaricata, ricarica la pagina per riattivare');
       observer.disconnect();
     }
   });
@@ -350,12 +353,12 @@ function simulateRealClick(element) {
 
 // Funzione per cliccare sul bottone di timbratura
 function clickTimbraButton() {
-  console.log('[Timbratura] Tentativo di click sul bottone...');
-  console.log('[Timbratura] URL corrente:', window.location.href);
+  log('[Timbratura] Tentativo di click sul bottone...');
+  log('[Timbratura] URL corrente:', window.location.href);
   
   // Cerca il bottone TIMBRA con vari selettori
   const buttons = document.querySelectorAll('button, a, input[type="button"], input[type="submit"], [role="button"], div[onclick]');
-  console.log('[Timbratura] Trovati', buttons.length, 'elementi cliccabili');
+  log('[Timbratura] Trovati', buttons.length, 'elementi cliccabili');
   
   let timbraButton = null;
   let tipoTimbratura = '';
@@ -389,7 +392,7 @@ function clickTimbraButton() {
           text: text || value || ariaLabel || title
         });
         
-        console.log('[Timbratura] Candidato trovato:', text || value || ariaLabel || title);
+        log('[Timbratura] Candidato trovato:', text || value || ariaLabel || title);
       }
     }
   }
@@ -408,8 +411,8 @@ function clickTimbraButton() {
       tipoTimbratura = 'Timbratura';
     }
     
-    console.log('[Timbratura] Bottone selezionato:', buttonText, '- Tipo:', tipoTimbratura);
-    console.log('[Timbratura] Elemento:', timbraButton);
+    log('[Timbratura] Bottone selezionato:', buttonText, '- Tipo:', tipoTimbratura);
+    log('[Timbratura] Elemento:', timbraButton);
     
     // Scroll al bottone per assicurarsi che sia visibile
     timbraButton.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -418,7 +421,7 @@ function clickTimbraButton() {
     setTimeout(() => {
       // Simula un click realistico
       simulateRealClick(timbraButton);
-      console.log('[Timbratura] Click effettuato!');
+      log('[Timbratura] Click effettuato!');
       
       // Aspetta un po' e ricontrolla lo stato
       setTimeout(function() {
@@ -434,12 +437,12 @@ function clickTimbraButton() {
       }
     };
   } else {
-    console.log('[Timbratura] Nessun bottone trovato');
-    console.log('[Timbratura] Prova ad aprire manualmente la pagina e verifica che il bottone sia visibile');
+    log('[Timbratura] Nessun bottone trovato');
+    log('[Timbratura] Prova ad aprire manualmente la pagina e verifica che il bottone sia visibile');
     
     // Debug: mostra tutti i bottoni trovati
     const allButtonTexts = Array.from(buttons).slice(0, 10).map(b => b.textContent.trim().substring(0, 50));
-    console.log('[Timbratura] Primi 10 bottoni nella pagina:', allButtonTexts);
+    log('[Timbratura] Primi 10 bottoni nella pagina:', allButtonTexts);
     
     return { 
       success: false, 
