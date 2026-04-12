@@ -95,7 +95,7 @@ function renderFullDayExclusions(exclusions) {
   // Ordina per data
   exclusions.sort((a, b) => new Date(a.date) - new Date(b.date));
 
-  exclusions.forEach((exclusion, index) => {
+  exclusions.forEach((exclusion) => {
     const item = document.createElement('div');
     item.className = 'exclusion-item';
 
@@ -115,10 +115,9 @@ function renderFullDayExclusions(exclusions) {
     span.textContent = text;
 
     const button = document.createElement('button');
-    button.dataset.index = index;
     button.textContent = 'Rimuovi';
     button.addEventListener('click', function () {
-      removeFullDayExclusion(index);
+      removeFullDayExclusion(exclusion.date);
     });
 
     item.appendChild(span);
@@ -144,7 +143,7 @@ function renderHalfDayExclusions(exclusions) {
   // Ordina per data
   exclusions.sort((a, b) => new Date(a.date) - new Date(b.date));
 
-  exclusions.forEach((exclusion, index) => {
+  exclusions.forEach((exclusion) => {
     const item = document.createElement('div');
     item.className = 'exclusion-item';
 
@@ -166,16 +165,27 @@ function renderHalfDayExclusions(exclusions) {
     span.textContent = text;
 
     const button = document.createElement('button');
-    button.dataset.index = index;
     button.textContent = 'Rimuovi';
     button.addEventListener('click', function () {
-      removeHalfDayExclusion(index);
+      removeHalfDayExclusion(exclusion.date, exclusion.period);
     });
 
     item.appendChild(span);
     item.appendChild(button);
     container.appendChild(item);
   });
+}
+
+const MAX_EXCLUSIONS = 365;
+const MAX_DESCRIPTION_LENGTH = 100;
+const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
+
+function isValidDate(dateStr) {
+  return DATE_REGEX.test(dateStr) && !isNaN(new Date(dateStr).getTime());
+}
+
+function sanitizeDescription(value) {
+  return value.trim().substring(0, MAX_DESCRIPTION_LENGTH);
 }
 
 // Aggiungi giornata intera
@@ -188,8 +198,18 @@ function addFullDayExclusion() {
     return;
   }
 
+  if (!isValidDate(dateInput.value)) {
+    showToast('Data non valida', 'error');
+    return;
+  }
+
   chrome.storage.local.get({ fullDayExclusions: [] }, function (items) {
     const exclusions = items.fullDayExclusions;
+
+    if (exclusions.length >= MAX_EXCLUSIONS) {
+      showToast(`Massimo ${MAX_EXCLUSIONS} esclusioni raggiunto`, 'warning');
+      return;
+    }
 
     // Verifica se la data esiste già
     if (exclusions.some((e) => e.date === dateInput.value)) {
@@ -199,7 +219,7 @@ function addFullDayExclusion() {
 
     exclusions.push({
       date: dateInput.value,
-      description: descriptionInput.value,
+      description: sanitizeDescription(descriptionInput.value),
     });
 
     chrome.storage.local.set({ fullDayExclusions: exclusions }, function () {
@@ -221,8 +241,18 @@ function addHalfDayExclusion() {
     return;
   }
 
+  if (!isValidDate(dateInput.value)) {
+    showToast('Data non valida', 'error');
+    return;
+  }
+
   chrome.storage.local.get({ halfDayExclusions: [] }, function (items) {
     const exclusions = items.halfDayExclusions;
+
+    if (exclusions.length >= MAX_EXCLUSIONS) {
+      showToast(`Massimo ${MAX_EXCLUSIONS} esclusioni raggiunto`, 'warning');
+      return;
+    }
 
     // Verifica se la data e periodo esistono già
     if (exclusions.some((e) => e.date === dateInput.value && e.period === periodInput.value)) {
@@ -233,7 +263,7 @@ function addHalfDayExclusion() {
     exclusions.push({
       date: dateInput.value,
       period: periodInput.value,
-      description: descriptionInput.value,
+      description: sanitizeDescription(descriptionInput.value),
     });
 
     chrome.storage.local.set({ halfDayExclusions: exclusions }, function () {
@@ -245,10 +275,9 @@ function addHalfDayExclusion() {
 }
 
 // Rimuovi giornata intera
-function removeFullDayExclusion(index) {
+function removeFullDayExclusion(date) {
   chrome.storage.local.get({ fullDayExclusions: [] }, function (items) {
-    const exclusions = items.fullDayExclusions;
-    exclusions.splice(index, 1);
+    const exclusions = items.fullDayExclusions.filter((e) => e.date !== date);
 
     chrome.storage.local.set({ fullDayExclusions: exclusions }, function () {
       renderFullDayExclusions(exclusions);
@@ -257,10 +286,11 @@ function removeFullDayExclusion(index) {
 }
 
 // Rimuovi mezza giornata
-function removeHalfDayExclusion(index) {
+function removeHalfDayExclusion(date, period) {
   chrome.storage.local.get({ halfDayExclusions: [] }, function (items) {
-    const exclusions = items.halfDayExclusions;
-    exclusions.splice(index, 1);
+    const exclusions = items.halfDayExclusions.filter(
+      (e) => !(e.date === date && e.period === period)
+    );
 
     chrome.storage.local.set({ halfDayExclusions: exclusions }, function () {
       renderHalfDayExclusions(exclusions);
@@ -280,6 +310,15 @@ function saveOptions() {
   const enableSound = document.getElementById('enableSound').checked;
   const soundType = document.getElementById('soundType').value;
   const soundVolume = parseInt(document.getElementById('soundVolume').value);
+
+  // Validazione coerenza orari: morningStart < lunchEnd < afternoonStart < eveningEnd
+  const times = [morningStart, lunchEnd, afternoonStart, eveningEnd];
+  for (let i = 0; i < times.length - 1; i++) {
+    if (times[i] >= times[i + 1]) {
+      showToast('Gli orari devono essere in ordine cronologico crescente', 'error');
+      return;
+    }
+  }
 
   chrome.storage.local.set(
     {

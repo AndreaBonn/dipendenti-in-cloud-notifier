@@ -1,6 +1,6 @@
 const DEBUG = false;
 function log(...args) {
-  if (DEBUG) console.log(...args);
+  if (DEBUG) console.log(...args); // eslint-disable-line no-console
 }
 
 // Funzione per estrarre le timbrature di oggi
@@ -322,10 +322,15 @@ function isRuntimeValid() {
 
 // Funzione per osservare cambiamenti nella pagina
 function setupObserver() {
-  // Configuriamo un MutationObserver per rilevare cambiamenti nella pagina
+  let debounceTimer = null;
+  const DEBOUNCE_DELAY = 500; // ms — evita check multipli su micro-mutazioni DOM della SPA
+
   const observer = new MutationObserver(function (_mutations) {
     if (isRuntimeValid()) {
-      checkTimbratura();
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(function () {
+        checkTimbratura();
+      }, DEBOUNCE_DELAY);
     } else {
       log('[Timbratura] Estensione ricaricata, ricarica la pagina per riattivare');
       observer.disconnect();
@@ -497,6 +502,9 @@ function clickTimbraButton() {
 
 // Rispondiamo ai messaggi dal popup
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
+  // Accetta solo messaggi dall'estensione stessa
+  if (sender.id !== chrome.runtime.id) return;
+
   if (request.action === 'getStatus') {
     // Se siamo nella pagina di Dipendenti in Cloud, controlliamo lo stato in tempo reale
     if (document.location.href.includes('secure.dipendentincloud.it')) {

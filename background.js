@@ -4,11 +4,12 @@ import {
   shouldBlink,
   getBadgeText,
   getNotificationsToSend,
+  checkExclusion,
 } from './src/time-utils.js';
 
 const DEBUG = false;
 function log(...args) {
-  if (DEBUG) console.log(...args);
+  if (DEBUG) console.log(...args); // eslint-disable-line no-console
 }
 
 // Timing constants
@@ -22,11 +23,9 @@ const STARTUP_DELAY_MS = 2000;
 
 // State
 let blinkInterval = null;
-let currentIconState = 'na';
 let isBlinking = false;
 
 let soundInterval = null;
-let lastSoundTime = null;
 
 // Variabili per gestire le notifiche
 let notificationsSent = {};
@@ -115,7 +114,6 @@ function setIcon(state) {
   };
 
   chrome.action.setIcon({ path: icons[state] || icons.na });
-  currentIconState = state;
 
   // Imposta il colore del badge in base allo stato
   const badgeColors = {
@@ -153,7 +151,11 @@ function playNotificationSound() {
     function (options) {
       if (!options.enableSound) return;
 
-      const volume = options.soundVolume / 100; // Converti in 0-1
+      const VALID_SOUND_TYPES = ['classic', 'urgent', 'gentle', 'bell', 'digital', 'alarm'];
+      const soundType = VALID_SOUND_TYPES.includes(options.soundType)
+        ? options.soundType
+        : 'classic';
+      const volume = Math.max(0, Math.min(1, Number(options.soundVolume / 100) || 0.5));
 
       // Creiamo un offscreen document per riprodurre l'audio
       chrome.offscreen
@@ -165,7 +167,7 @@ function playNotificationSound() {
         .then(() => {
           chrome.runtime.sendMessage({
             action: 'playSound',
-            soundType: options.soundType,
+            soundType: soundType,
             volume: volume,
           });
         })
@@ -174,7 +176,7 @@ function playNotificationSound() {
           if (error.message.includes('Only a single offscreen')) {
             chrome.runtime.sendMessage({
               action: 'playSound',
-              soundType: options.soundType,
+              soundType: soundType,
               volume: volume,
             });
           }
@@ -188,7 +190,6 @@ function stopSound() {
   if (soundInterval) {
     clearInterval(soundInterval);
     soundInterval = null;
-    lastSoundTime = null;
   }
 }
 
@@ -198,12 +199,10 @@ function startSound() {
 
   // Riproduciamo immediatamente il primo suono
   playNotificationSound();
-  lastSoundTime = Date.now();
 
   // Impostiamo l'intervallo per ripetere ogni 5 minuti
   soundInterval = setInterval(() => {
     playNotificationSound();
-    lastSoundTime = Date.now();
   }, SOUND_REPEAT_MS);
 }
 
@@ -299,6 +298,9 @@ function getCurrentSituationId() {
 
 // Gestione dei messaggi dal content script
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
+  // Accetta solo messaggi dall'estensione stessa
+  if (sender.id !== chrome.runtime.id) return;
+
   if (request.action === 'testSound') {
     // Test del suono dalle opzioni
     const soundType = request.soundType || 'classic';
@@ -475,42 +477,16 @@ function isExcludedDay(callback) {
     },
     function (options) {
       const now = new Date();
-      const day = now.getDay(); // 0 = Domenica, 6 = Sabato
-      const hours = now.getHours();
-      const minutes = now.getMinutes();
-      const currentTime = hours * 60 + minutes;
-
-      // Formato data YYYY-MM-DD
-      const today = now.toISOString().split('T')[0];
-
-      // Verifica weekend
-      if (options.excludeWeekends && (day === 0 || day === 6)) {
-        callback({ excluded: true, reason: 'weekend' });
-        return;
-      }
-
-      // Verifica giornate intere escluse
-      if (options.fullDayExclusions.some((e) => e.date === today)) {
-        callback({ excluded: true, reason: 'fullDay' });
-        return;
-      }
-
-      // Verifica mezze giornate escluse
-      const halfDayExclusion = options.halfDayExclusions.find((e) => e.date === today);
-      if (halfDayExclusion) {
-        // Mattina: 8:00-13:00 (480-780 minuti)
-        // Pomeriggio: 14:00-18:00 (840-1080 minuti)
-        if (halfDayExclusion.period === 'morning' && currentTime >= 480 && currentTime < 780) {
-          callback({ excluded: true, reason: 'halfDayMorning' });
-          return;
-        }
-        if (halfDayExclusion.period === 'afternoon' && currentTime >= 840 && currentTime <= 1080) {
-          callback({ excluded: true, reason: 'halfDayAfternoon' });
-          return;
-        }
-      }
-
-      callback({ excluded: false });
+      const result = checkExclusion({
+        dayOfWeek: now.getDay(),
+        dateStr: now.toISOString().split('T')[0],
+        currentMinutes: now.getHours() * 60 + now.getMinutes(),
+        excludeWeekends: options.excludeWeekends,
+        fullDayExclusions: options.fullDayExclusions,
+        halfDayExclusions: options.halfDayExclusions,
+        checkTime: true,
+      });
+      callback(result);
     }
   );
 }

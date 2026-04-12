@@ -16,7 +16,8 @@
   "content_security_policy": {
     "extension_pages": "script-src 'self'; object-src 'self'"
   },
-  "permissions": ["activeTab", "storage", "offscreen", "tabs", "notifications"],
+  "permissions": ["activeTab", "storage", "offscreen", "notifications"],
+  "host_permissions": ["*://secure.dipendentincloud.it/*", "*://cloud.dipendentincloud.it/*"],
   "content_scripts": [
     {
       "matches": ["*://secure.dipendentincloud.it/*", "*://cloud.dipendentincloud.it/*"],

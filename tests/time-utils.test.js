@@ -5,6 +5,7 @@ import {
   shouldBlink,
   getBadgeText,
   getNotificationsToSend,
+  checkExclusion,
 } from '../src/time-utils.js';
 
 const DEFAULT_SCHEDULE = {
@@ -263,5 +264,112 @@ describe('timeToMinutes - invalid inputs', () => {
 
   it('handles single-digit minutes', () => {
     expect(timeToMinutes('09:5')).toBe(545);
+  });
+});
+
+describe('checkExclusion', () => {
+  const baseParams = {
+    dayOfWeek: 1, // Monday
+    dateStr: '2026-04-13',
+    currentMinutes: 600, // 10:00
+    excludeWeekends: true,
+    fullDayExclusions: [],
+    halfDayExclusions: [],
+    checkTime: true,
+  };
+
+  it('returns not excluded on a normal weekday', () => {
+    const result = checkExclusion(baseParams);
+    expect(result.excluded).toBe(false);
+  });
+
+  it('excludes weekends when excludeWeekends is true', () => {
+    const result = checkExclusion({ ...baseParams, dayOfWeek: 0 }); // Sunday
+    expect(result).toEqual({ excluded: true, reason: 'weekend' });
+  });
+
+  it('does not exclude weekends when excludeWeekends is false', () => {
+    const result = checkExclusion({ ...baseParams, dayOfWeek: 6, excludeWeekends: false });
+    expect(result.excluded).toBe(false);
+  });
+
+  it('excludes full-day exclusion matching date', () => {
+    const result = checkExclusion({
+      ...baseParams,
+      fullDayExclusions: [{ date: '2026-04-13', description: 'Ferie' }],
+    });
+    expect(result).toEqual({ excluded: true, reason: 'fullDay', description: 'Ferie' });
+  });
+
+  it('does not exclude full-day for different date', () => {
+    const result = checkExclusion({
+      ...baseParams,
+      fullDayExclusions: [{ date: '2026-04-14' }],
+    });
+    expect(result.excluded).toBe(false);
+  });
+
+  it('excludes morning half-day when in morning time window (checkTime=true)', () => {
+    const result = checkExclusion({
+      ...baseParams,
+      currentMinutes: 600, // 10:00 — within 480-780
+      halfDayExclusions: [{ date: '2026-04-13', period: 'morning', description: 'Visita medica' }],
+    });
+    expect(result).toEqual({
+      excluded: true,
+      reason: 'halfDayMorning',
+      description: 'Visita medica',
+    });
+  });
+
+  it('does not exclude morning half-day when outside time window (checkTime=true)', () => {
+    const result = checkExclusion({
+      ...baseParams,
+      currentMinutes: 900, // 15:00 — outside 480-780
+      halfDayExclusions: [{ date: '2026-04-13', period: 'morning' }],
+    });
+    expect(result.excluded).toBe(false);
+  });
+
+  it('excludes afternoon half-day when in afternoon time window', () => {
+    const result = checkExclusion({
+      ...baseParams,
+      currentMinutes: 900, // 15:00 — within 840-1080
+      halfDayExclusions: [{ date: '2026-04-13', period: 'afternoon' }],
+    });
+    expect(result).toEqual({ excluded: true, reason: 'halfDayAfternoon', description: undefined });
+  });
+
+  it('excludes half-day regardless of time when checkTime=false', () => {
+    const result = checkExclusion({
+      ...baseParams,
+      currentMinutes: 900, // 15:00 — outside morning window
+      halfDayExclusions: [{ date: '2026-04-13', period: 'morning', description: 'Test' }],
+      checkTime: false,
+    });
+    expect(result).toEqual({
+      excluded: true,
+      reason: 'halfDay',
+      period: 'morning',
+      description: 'Test',
+    });
+  });
+
+  it('prioritizes weekend over other exclusions', () => {
+    const result = checkExclusion({
+      ...baseParams,
+      dayOfWeek: 6, // Saturday
+      fullDayExclusions: [{ date: '2026-04-13' }],
+    });
+    expect(result.reason).toBe('weekend');
+  });
+
+  it('prioritizes full-day over half-day', () => {
+    const result = checkExclusion({
+      ...baseParams,
+      fullDayExclusions: [{ date: '2026-04-13', description: 'Ferie' }],
+      halfDayExclusions: [{ date: '2026-04-13', period: 'morning' }],
+    });
+    expect(result.reason).toBe('fullDay');
   });
 });

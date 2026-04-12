@@ -4,8 +4,8 @@
   "description": "Chrome extension (unofficial) for dipendentincloud.it time-clock reminders",
   "private": true,
   "scripts": {
-    "lint": "eslint *.js",
-    "lint:fix": "eslint *.js --fix",
+    "lint": "eslint --no-warn-ignored *.js",
+    "lint:fix": "eslint --no-warn-ignored *.js --fix",
     "format": "prettier --write '*.{js,css,html,json,md}'",
     "format:check": "prettier --check '*.{js,css,html,json,md}'",
     "test": "vitest run",
