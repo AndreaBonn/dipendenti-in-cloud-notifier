@@ -44,22 +44,33 @@ document.addEventListener('DOMContentLoaded', function () {
     const storicoList = document.getElementById('storico-list');
 
     if (!timbrature || timbrature.length === 0) {
-      storicoList.innerHTML = '<div class="storico-empty">Nessuna timbratura oggi</div>';
+      storicoList.textContent = '';
+      const emptyDiv = document.createElement('div');
+      emptyDiv.className = 'storico-empty';
+      emptyDiv.textContent = 'Nessuna timbratura oggi';
+      storicoList.appendChild(emptyDiv);
       storicoSection.style.display = 'block';
       return;
     }
 
-    storicoList.innerHTML = '';
+    storicoList.textContent = '';
     timbrature.forEach((timb, index) => {
       const item = document.createElement('div');
       const tipo = (index % 2 === 0) ? 'entrata' : 'uscita';
       const tipoLabel = (index % 2 === 0) ? 'Entrata' : 'Uscita';
 
       item.className = `storico-item ${tipo}`;
-      item.innerHTML = `
-        <span class="storico-time">${timb}</span>
-        <span class="storico-type ${tipo}">${tipoLabel}</span>
-      `;
+
+      const timeSpan = document.createElement('span');
+      timeSpan.className = 'storico-time';
+      timeSpan.textContent = timb;
+
+      const typeSpan = document.createElement('span');
+      typeSpan.className = `storico-type ${tipo}`;
+      typeSpan.textContent = tipoLabel;
+
+      item.appendChild(timeSpan);
+      item.appendChild(typeSpan);
       storicoList.appendChild(item);
     });
 

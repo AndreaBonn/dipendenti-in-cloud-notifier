@@ -36,43 +36,46 @@ function renderFullDayExclusions(exclusions) {
   const container = document.getElementById('fullDayExclusions');
   const emptyMessage = document.getElementById('emptyFullDay');
   
-  container.innerHTML = '';
-  
+  container.textContent = '';
+
   if (exclusions.length === 0) {
     emptyMessage.style.display = 'block';
     return;
   }
-  
+
   emptyMessage.style.display = 'none';
-  
+
   // Ordina per data
   exclusions.sort((a, b) => new Date(a.date) - new Date(b.date));
-  
+
   exclusions.forEach((exclusion, index) => {
     const item = document.createElement('div');
     item.className = 'exclusion-item';
-    
+
     const date = new Date(exclusion.date);
-    const formattedDate = date.toLocaleDateString('it-IT', { 
-      weekday: 'short', 
-      day: '2-digit', 
-      month: '2-digit', 
-      year: 'numeric' 
+    const formattedDate = date.toLocaleDateString('it-IT', {
+      weekday: 'short',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
     });
-    
-    const text = exclusion.description 
+
+    const text = exclusion.description
       ? `${formattedDate} - ${exclusion.description}`
       : formattedDate;
-    
-    item.innerHTML = `
-      <span>${text}</span>
-      <button data-index="${index}">Rimuovi</button>
-    `;
-    
-    item.querySelector('button').addEventListener('click', function() {
+
+    const span = document.createElement('span');
+    span.textContent = text;
+
+    const button = document.createElement('button');
+    button.dataset.index = index;
+    button.textContent = 'Rimuovi';
+    button.addEventListener('click', function() {
       removeFullDayExclusion(index);
     });
-    
+
+    item.appendChild(span);
+    item.appendChild(button);
     container.appendChild(item);
   });
 }
@@ -82,45 +85,48 @@ function renderHalfDayExclusions(exclusions) {
   const container = document.getElementById('halfDayExclusions');
   const emptyMessage = document.getElementById('emptyHalfDay');
   
-  container.innerHTML = '';
-  
+  container.textContent = '';
+
   if (exclusions.length === 0) {
     emptyMessage.style.display = 'block';
     return;
   }
-  
+
   emptyMessage.style.display = 'none';
-  
+
   // Ordina per data
   exclusions.sort((a, b) => new Date(a.date) - new Date(b.date));
-  
+
   exclusions.forEach((exclusion, index) => {
     const item = document.createElement('div');
     item.className = 'exclusion-item';
-    
+
     const date = new Date(exclusion.date);
-    const formattedDate = date.toLocaleDateString('it-IT', { 
-      weekday: 'short', 
-      day: '2-digit', 
-      month: '2-digit', 
-      year: 'numeric' 
+    const formattedDate = date.toLocaleDateString('it-IT', {
+      weekday: 'short',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
     });
-    
+
     const period = exclusion.period === 'morning' ? 'Mattina' : 'Pomeriggio';
-    
-    const text = exclusion.description 
+
+    const text = exclusion.description
       ? `${formattedDate} (${period}) - ${exclusion.description}`
       : `${formattedDate} (${period})`;
-    
-    item.innerHTML = `
-      <span>${text}</span>
-      <button data-index="${index}">Rimuovi</button>
-    `;
-    
-    item.querySelector('button').addEventListener('click', function() {
+
+    const span = document.createElement('span');
+    span.textContent = text;
+
+    const button = document.createElement('button');
+    button.dataset.index = index;
+    button.textContent = 'Rimuovi';
+    button.addEventListener('click', function() {
       removeHalfDayExclusion(index);
     });
-    
+
+    item.appendChild(span);
+    item.appendChild(button);
     container.appendChild(item);
   });
 }
@@ -310,42 +316,63 @@ function showImportModal(assenze) {
   // Carica le assenze già esistenti
   chrome.storage.local.get({ fullDayExclusions: [] }, function(items) {
     const existingDates = items.fullDayExclusions.map(e => e.date);
-    
-    assenzeList.innerHTML = '';
-    
+
+    assenzeList.textContent = '';
+
     if (assenze.length === 0) {
-      assenzeList.innerHTML = '<div class="no-assenze">Nessuna assenza trovata</div>';
+      const emptyDiv = document.createElement('div');
+      emptyDiv.className = 'no-assenze';
+      emptyDiv.textContent = 'Nessuna assenza trovata';
+      assenzeList.appendChild(emptyDiv);
     } else {
       assenze.forEach((assenza, index) => {
         const isDuplicate = existingDates.includes(assenza.date);
         const date = new Date(assenza.date);
-        const formattedDate = date.toLocaleDateString('it-IT', { 
-          weekday: 'short', 
-          day: '2-digit', 
-          month: '2-digit', 
-          year: 'numeric' 
+        const formattedDate = date.toLocaleDateString('it-IT', {
+          weekday: 'short',
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric'
         });
-        
+
         const item = document.createElement('div');
         item.className = 'assenza-preview' + (isDuplicate ? ' duplicate' : '');
-        item.innerHTML = `
-          <div class="assenza-info">
-            <div class="assenza-date">${formattedDate}</div>
-            <div class="assenza-tipo">${assenza.descrizione}${isDuplicate ? ' (già presente)' : ''}</div>
-          </div>
-          <div class="assenza-checkbox">
-            <input type="checkbox" 
-                   data-index="${index}" 
-                   data-date="${assenza.date}"
-                   data-description="${assenza.descrizione}"
-                   ${isDuplicate ? 'disabled' : 'checked'}>
-          </div>
-        `;
-        
+
+        const infoDiv = document.createElement('div');
+        infoDiv.className = 'assenza-info';
+
+        const dateDiv = document.createElement('div');
+        dateDiv.className = 'assenza-date';
+        dateDiv.textContent = formattedDate;
+
+        const tipoDiv = document.createElement('div');
+        tipoDiv.className = 'assenza-tipo';
+        tipoDiv.textContent = assenza.descrizione + (isDuplicate ? ' (già presente)' : '');
+
+        infoDiv.appendChild(dateDiv);
+        infoDiv.appendChild(tipoDiv);
+
+        const checkboxDiv = document.createElement('div');
+        checkboxDiv.className = 'assenza-checkbox';
+
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.dataset.index = index;
+        checkbox.dataset.date = assenza.date;
+        checkbox.dataset.description = assenza.descrizione;
+        if (isDuplicate) {
+          checkbox.disabled = true;
+        } else {
+          checkbox.checked = true;
+        }
+
+        checkboxDiv.appendChild(checkbox);
+        item.appendChild(infoDiv);
+        item.appendChild(checkboxDiv);
         assenzeList.appendChild(item);
       });
     }
-    
+
     modal.style.display = 'block';
   });
 }
