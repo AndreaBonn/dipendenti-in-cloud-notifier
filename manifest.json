@@ -1,0 +1,43 @@
+{
+  "manifest_version": 3,
+  "name": "Promemoria Timbrature",
+  "version": "2.0",
+  "description": "Estensione NON UFFICIALE per ricordare di timbrare su dipendentincloud.it. Notifiche, countdown e timbratura rapida.",
+  "author": "Andrea Bonacci",
+  "homepage_url": "https://github.com/AndreaBonn/EstensioneChrome_DipendentiInCloud__private",
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "images/timer-green-16.png",
+      "48": "images/timer-green-48.png",
+      "128": "images/timer-green-128.png"
+    }
+  },
+  "permissions": [
+    "activeTab",
+    "storage",
+    "offscreen",
+    "tabs",
+    "notifications"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "*://secure.dipendentincloud.it/*",
+        "*://cloud.dipendentincloud.it/*"
+      ],
+      "js": [
+        "content.js"
+      ]
+    }
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "options_page": "options.html",
+  "icons": {
+    "16": "images/timer-green-16.png",
+    "48": "images/timer-green-48.png",
+    "128": "images/timer-green-128.png"
+  }
+}

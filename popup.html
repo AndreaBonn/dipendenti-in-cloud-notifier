@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Stato Timbratura</title>
+  <meta charset="UTF-8">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      width: 320px;
+      padding: 15px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+      background-color: #ffffff;
+    }
+
+    h3 {
+      font-size: 1.2em;
+      margin-bottom: 15px;
+      color: #212529;
+      text-align: center;
+    }
+
+    .status {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 12px;
+      padding: 16px;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      text-align: center;
+    }
+
+    .status-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      margin-right: 12px;
+      flex-shrink: 0;
+    }
+
+    .timbrato {
+      background-color: #e6f7e6;
+      border: 2px solid #28a745;
+    }
+
+    .non-timbrato {
+      background-color: #f8d7da;
+      border: 2px solid #dc3545;
+    }
+
+    .non-disponibile {
+      background-color: #f8f9fa;
+      border: 2px solid #6c757d;
+    }
+
+    .green {
+      background-color: #28a745;
+    }
+
+    .red {
+      background-color: #dc3545;
+    }
+
+    .gray {
+      background-color: #6c757d;
+    }
+
+    .status-text {
+      font-size: 1.3em;
+      font-weight: 700;
+    }
+
+    .status-text.text-green {
+      color: #28a745;
+    }
+
+    .status-text.text-red {
+      color: #dc3545;
+    }
+
+    .status-text.text-gray {
+      color: #6c757d;
+    }
+
+    .countdown {
+      font-size: 1em;
+      font-weight: 600;
+      text-align: center;
+      padding: 12px;
+      margin: 12px 0;
+      border-radius: 8px;
+      background-color: #f8f9fa;
+      border: 2px solid #dee2e6;
+    }
+
+    .countdown.warning {
+      background-color: #fff3cd;
+      border-color: #ffc107;
+      color: #856404;
+    }
+
+    .countdown.urgent {
+      background-color: #f8d7da;
+      border-color: #dc3545;
+      color: #721c24;
+      animation: pulse 1s infinite;
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: 0.7;
+      }
+    }
+
+    .time {
+      font-size: 0.75em;
+      color: #6c757d;
+      text-align: center;
+      margin: 8px 0;
+    }
+
+    .loading {
+      text-align: center;
+      color: #6c757d;
+      padding: 20px;
+    }
+
+    .error {
+      color: #dc3545;
+      text-align: center;
+      font-size: 0.85em;
+      margin: 10px 0;
+      padding: 8px;
+      background-color: #f8d7da;
+      border-radius: 6px;
+    }
+
+    /* Stili unificati per tutti i bottoni */
+    .button,
+    .button-timbra,
+    .button-mute {
+      display: block;
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      text-align: center;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.95em;
+      margin-top: 8px;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .button-timbra {
+      background-color: #28a745;
+      color: white;
+      font-size: 1.05em;
+      padding: 14px;
+      margin-top: 12px;
+    }
+
+    .button-timbra:hover {
+      background-color: #218838;
+      box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+      transform: translateY(-1px);
+    }
+
+    .button-timbra:disabled {
+      background-color: #6c757d;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .button-mute {
+      background-color: #ffc107;
+      color: #000;
+      margin-top: 8px;
+    }
+
+    .button-mute:hover {
+      background-color: #e0a800;
+      box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+      transform: translateY(-1px);
+    }
+
+    .button {
+      background-color: #007bff;
+      color: white;
+    }
+
+    .button:hover {
+      background-color: #0069d9;
+      box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+      transform: translateY(-1px);
+    }
+
+    .button.secondary {
+      background-color: #6c757d;
+    }
+
+    .button.secondary:hover {
+      background-color: #5a6268;
+    }
+
+    .feedback {
+      padding: 10px;
+      margin-top: 10px;
+      border-radius: 8px;
+      text-align: center;
+      font-weight: 600;
+      font-size: 0.9em;
+    }
+
+    .feedback.success {
+      background-color: #d4edda;
+      color: #155724;
+      border: 2px solid #c3e6cb;
+    }
+
+    .feedback.error {
+      background-color: #f8d7da;
+      color: #721c24;
+      border: 2px solid #f5c6cb;
+    }
+
+    .timbratura-details {
+      background-color: #d4edda;
+      border: 2px solid #c3e6cb;
+      border-radius: 8px;
+      padding: 12px;
+      margin-top: 10px;
+      font-size: 0.9em;
+    }
+
+    .timbratura-details .detail-row {
+      display: flex;
+      justify-content: space-between;
+      margin: 6px 0;
+    }
+
+    .timbratura-details .detail-label {
+      font-weight: 600;
+      color: #155724;
+    }
+
+    .timbratura-details .detail-value {
+      color: #155724;
+      font-weight: 500;
+    }
+
+    .storico-section {
+      margin-top: 15px;
+      padding-top: 15px;
+      border-top: 2px solid #dee2e6;
+    }
+
+    .storico-title {
+      font-weight: 600;
+      font-size: 0.95em;
+      margin-bottom: 10px;
+      color: #495057;
+    }
+
+    .storico-list {
+      max-height: 180px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    .storico-list::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .storico-list::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 3px;
+    }
+
+    .storico-list::-webkit-scrollbar-thumb {
+      background: #888;
+      border-radius: 3px;
+    }
+
+    .storico-list::-webkit-scrollbar-thumb:hover {
+      background: #555;
+    }
+
+    .storico-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 10px;
+      margin: 6px 0;
+      background-color: #f8f9fa;
+      border-radius: 6px;
+      font-size: 0.9em;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    }
+
+    .storico-item.entrata {
+      border-left: 4px solid #28a745;
+    }
+
+    .storico-item.uscita {
+      border-left: 4px solid #dc3545;
+    }
+
+    .storico-time {
+      font-weight: 600;
+      color: #495057;
+      font-size: 1em;
+    }
+
+    .storico-type {
+      font-size: 0.75em;
+      padding: 3px 8px;
+      border-radius: 4px;
+      color: white;
+      font-weight: 600;
+    }
+
+    .storico-type.entrata {
+      background-color: #28a745;
+    }
+
+    .storico-type.uscita {
+      background-color: #dc3545;
+    }
+
+    .storico-empty {
+      text-align: center;
+      color: #6c757d;
+      font-size: 0.85em;
+      padding: 15px;
+      font-style: italic;
+    }
+
+    .disclaimer-small {
+      text-align: center;
+      font-size: 0.7em;
+      color: #6c757d;
+      margin-top: -8px;
+      margin-bottom: 10px;
+      font-style: italic;
+    }
+  </style>
+</head>
+
+<body>
+  <h3>Stato Timbratura</h3>
+  <div class="disclaimer-small">Estensione non ufficiale</div>
+  <div id="loading" class="loading">Caricamento...</div>
+  <div id="error" class="error" style="display: none;"></div>
+  <div id="status-container" style="display: none;">
+    <div id="status" class="status">
+      <div id="status-icon" class="status-icon"></div>
+      <div id="status-text" class="status-text"></div>
+    </div>
+    <div id="countdown" class="countdown"></div>
+    <div id="time" class="time"></div>
+    <div id="storico-section" class="storico-section" style="display: none;">
+      <div class="storico-title">📋 Timbrature di oggi</div>
+      <div id="storico-list" class="storico-list"></div>
+    </div>
+    <button id="mute-notification" class="button-mute" style="display: none;">🔕 Silenzia Notifica</button>
+    <a id="open-site" class="button" href="#" target="_blank">🌐 Apri Dipendenti in Cloud</a>
+    <a id="open-options" class="button secondary" href="#">⚙️ Opzioni</a>
+  </div>
+  <script src="popup.js"></script>
+</body>
+
+</html>

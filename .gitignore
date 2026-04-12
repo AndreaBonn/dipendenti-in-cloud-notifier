@@ -1,0 +1,70 @@
+# Documenti commerciali sensibili
+PROPOSTA_COMMERCIALE.md
+
+# IDE e configurazioni editor
+.vscode/
+.idea/
+*.code-workspace
+
+# File con credenziali e configurazioni sensibili
+*.env
+*.env.local
+*.env.production
+.env
+.env.*
+config.local.js
+secrets.json
+credentials.json
+*.key
+*.pem
+*.p12
+*.pfx
+
+# File temporanei e cache
+*.log
+*.tmp
+*.temp
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Node modules (se presenti)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build e distribuzione
+dist/
+build/
+*.zip
+*.crx
+*.pem
+
+# Backup e file di sistema
+*~
+*.bak
+*.swp
+*.swo
+.backup/
+
+# Test e coverage
+coverage/
+.nyc_output/
+*.test.js.snap
+
+# OS specifici
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Documentazione privata
+NOTES.md
+TODO_PRIVATE.md
+INTERNAL_*.md
