@@ -11,6 +11,7 @@ L'utente è **completamente responsabile** delle proprie timbrature. Questa este
 ## 🎯 Funzionalità
 
 ### Monitoraggio e Notifiche
+
 - ✅ **Stato timbratura in tempo reale** - Mostra se sei timbrato o non timbrato
 - 🎨 **Icona dinamica** - Verde quando timbrato, rossa quando non timbrato, lampeggiante quando devi timbrare
 - ⏰ **Countdown intelligente** - Badge con tempo rimanente alla prossima timbratura (minuti/ore)
@@ -27,11 +28,13 @@ L'utente è **completamente responsabile** delle proprie timbrature. Questa este
 - 🔕 **Silenzia temporaneamente** - Disattiva le notifiche per la situazione corrente
 
 ### Storico e Visualizzazione
+
 - 📋 **Storico timbrature giornaliere** - Visualizza tutte le timbrature del giorno con orari
 - 🕐 **Countdown dettagliato** - Tempo rimanente con indicatori di urgenza (verde/giallo/rosso)
 - ⚡ **Apertura automatica** - Apre Dipendenti in Cloud all'avvio di Chrome (opzionale)
 
 ### Personalizzazione
+
 - ⚙️ **Orari di lavoro personalizzabili** - Configura i tuoi orari:
   - Entrata mattina (default 09:00)
   - Uscita pranzo (default 13:00)
@@ -46,9 +49,11 @@ L'utente è **completamente responsabile** delle proprie timbrature. Questa este
 ## 📦 Installazione
 
 ### Da Chrome Web Store
+
 [Link quando pubblicata]
 
 ### Installazione manuale (sviluppatori)
+
 1. Scarica o clona questo repository
 2. Apri Chrome e vai su `chrome://extensions/`
 3. Attiva "Modalità sviluppatore" in alto a destra
@@ -58,19 +63,23 @@ L'utente è **completamente responsabile** delle proprie timbrature. Questa este
 ## 🚀 Utilizzo
 
 ### Primo Avvio
+
 1. Installa l'estensione
 2. Apri dipendentincloud.it e accedi
 3. L'estensione rileverà automaticamente lo stato della timbratura
 4. L'icona cambierà colore in base allo stato (verde/rosso/grigio)
 
 ### Uso Quotidiano
+
 - **Icona verde** = Sei timbrato
 - **Icona rossa** = Non sei timbrato
 - **Icona lampeggiante** = Devi timbrare ora!
 - **Badge con numero** = Tempo rimanente alla prossima timbratura
 
 ### Popup Estensione
+
 Clicca sull'icona per vedere:
+
 - Stato attuale della timbratura
 - Countdown dettagliato alla prossima timbratura
 - Storico completo delle timbrature del giorno
@@ -82,10 +91,12 @@ Clicca sull'icona per vedere:
 Clicca su "⚙️ Opzioni" nel popup per personalizzare:
 
 ### Impostazioni Generali
+
 - **Apertura automatica** - Apri Dipendenti in Cloud all'avvio di Chrome
 - **Escludi weekend** - Disattiva notifiche sabato e domenica
 
 ### Notifiche e Suoni
+
 - **Notifiche desktop** - Abilita/disabilita le notifiche
 - **Suoni di notifica** - Abilita/disabilita i suoni
 - **Tipo di suono** - Scegli tra 6 suoni diversi (Classico, Gentile, Campanella, Digitale, Urgente, Allarme)
@@ -93,19 +104,24 @@ Clicca su "⚙️ Opzioni" nel popup per personalizzare:
 - **Prova suono** - Testa il suono selezionato prima di salvare
 
 ### Orari di Lavoro
+
 Configura i tuoi orari personalizzati:
+
 - Entrata mattina (es. 09:00)
 - Uscita pranzo (es. 13:00)
 - Entrata pomeriggio (es. 14:00)
 - Uscita serale (es. 18:00)
 
 ### Gestione Assenze
+
 **Giornate Intere (Ferie)**
+
 - Aggiungi manualmente le date di ferie
 - Oppure usa "📥 Importa da Dipendenti in Cloud" per importare automaticamente le assenze programmate
 - Aggiungi descrizioni opzionali (es. "Ferie Estive")
 
 **Mezze Giornate (Permessi)**
+
 - Aggiungi permessi per mattina (8:00-13:00) o pomeriggio (14:00-18:00)
 - Specifica la data e il periodo
 - Aggiungi descrizioni opzionali (es. "Visita medica")
@@ -114,16 +130,17 @@ Configura i tuoi orari personalizzati:
 
 L'estensione offre 6 tipi di suono diversi per adattarsi a ogni ambiente:
 
-| Suono | Caratteristiche | Quando usarlo |
-|-------|----------------|---------------|
-| 🎵 **Classico** | Tre toni morbidi ascendenti, professionale | Ufficio, uso quotidiano standard |
-| 🌸 **Gentile** | Discreto, volume ridotto del 30% | Open space, ambienti silenziosi |
-| 🔔 **Campanella** | Simile a notifiche smartphone | Smart working, suono familiare |
-| 💻 **Digitale** | Sequenza rapida moderna | Ambiente tech, startup |
-| ⚠️ **Urgente** | Incisivo e impossibile da ignorare | Ambienti rumorosi |
-| 🚨 **Allarme** | Effetto sirena, molto evidente | Massima evidenza (può essere fastidioso) |
+| Suono             | Caratteristiche                            | Quando usarlo                            |
+| ----------------- | ------------------------------------------ | ---------------------------------------- |
+| 🎵 **Classico**   | Tre toni morbidi ascendenti, professionale | Ufficio, uso quotidiano standard         |
+| 🌸 **Gentile**    | Discreto, volume ridotto del 30%           | Open space, ambienti silenziosi          |
+| 🔔 **Campanella** | Simile a notifiche smartphone              | Smart working, suono familiare           |
+| 💻 **Digitale**   | Sequenza rapida moderna                    | Ambiente tech, startup                   |
+| ⚠️ **Urgente**    | Incisivo e impossibile da ignorare         | Ambienti rumorosi                        |
+| 🚨 **Allarme**    | Effetto sirena, molto evidente             | Massima evidenza (può essere fastidioso) |
 
 **Come scegliere:**
+
 - **Ufficio condiviso**: Gentile o Classico (volume 30-40%)
 - **Home office**: Campanella o Digitale (volume 50-60%)
 - **Ambiente rumoroso**: Urgente o Allarme (volume 70-80%)
@@ -150,6 +167,7 @@ L'estensione offre 6 tipi di suono diversi per adattarsi a ogni ambiente:
 - Le notifiche sonore richiedono che Chrome abbia i permessi audio
 
 ### Risoluzione problemi audio
+
 - **Il suono non si sente**: Verifica che "Abilita suoni" sia attivo, controlla il volume dello slider e del sistema
 - **Il suono è troppo forte/debole**: Regola lo slider del volume nelle opzioni (20-40% per uffici, 50-60% per home office)
 - **Preferisci solo notifiche visive**: Disabilita "Abilita suoni di notifica" nelle opzioni
