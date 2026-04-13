@@ -36,6 +36,7 @@ All code must pass linting and formatting checks before submission.
 ## Reporting Issues
 
 Open an issue with:
+
 - Chrome version
 - Extension version (from `manifest.json`)
 - Steps to reproduce

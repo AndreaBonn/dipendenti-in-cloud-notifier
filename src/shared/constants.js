@@ -15,8 +15,6 @@ export const ALLOWED_ORIGINS = [
 // Timing constants (background service worker)
 export const SOUND_REPEAT_MS = 5 * 60 * 1000;
 export const BLINK_INTERVAL_MS = 500;
-export const STATUS_CHECK_MS = 30 * 1000;
-export const BADGE_UPDATE_MS = 60 * 1000;
 export const NOTIFICATION_WINDOW_MINUTES = 5;
 export const NOTIFICATION_AUTO_CLOSE_MS = 10 * 1000;
 export const STARTUP_DELAY_MS = 2000;

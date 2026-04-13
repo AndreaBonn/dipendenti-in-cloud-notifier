@@ -2,7 +2,13 @@
  * Exclusion management: render, add, remove full-day and half-day exclusions.
  */
 
-import { showToast, isValidDate, sanitizeDescription, MAX_EXCLUSIONS, VALID_PERIODS } from './ui-helpers.js';
+import {
+  showToast,
+  isValidDate,
+  sanitizeDescription,
+  MAX_EXCLUSIONS,
+  VALID_PERIODS,
+} from './ui-helpers.js';
 
 // Renderizza le giornate intere escluse
 export function renderFullDayExclusions(exclusions) {

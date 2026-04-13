@@ -21,23 +21,25 @@ export function sendToOffscreen(message) {
     });
   }
 
-  chrome.offscreen
-    .createDocument({
-      url: 'src/pages/offscreen/offscreen.html',
-      reasons: ['AUDIO_PLAYBACK'],
-      justification: 'Riproduzione suono di notifica',
-    })
-    .then(() => {
-      // Fresh creation — small delay to let the listener register
-      setTimeout(doSend, 50);
-    })
-    .catch((error) => {
-      if (error.message.includes('Only a single offscreen')) {
-        doSend(); // Already exists, listener is ready
-      } else {
-        logError('Errore offscreen non recuperabile:', error.message);
-      }
-    });
+  chrome.offscreen.hasDocument().then((exists) => {
+    if (exists) {
+      doSend();
+    } else {
+      chrome.offscreen
+        .createDocument({
+          url: 'src/pages/offscreen/offscreen.html',
+          reasons: ['AUDIO_PLAYBACK'],
+          justification: 'Riproduzione suono di notifica',
+        })
+        .then(() => {
+          // Fresh creation — small delay to let the listener register
+          setTimeout(doSend, 50);
+        })
+        .catch((error) => {
+          logError('Errore creazione offscreen document:', error.message);
+        });
+    }
+  });
 }
 
 /** Play the notification sound using current user preferences. */
@@ -56,7 +58,12 @@ function playNotificationSound() {
         : 'classic';
       const volume = Math.max(0, Math.min(1, Number(options.soundVolume / 100) || 0.5));
 
-      sendToOffscreen({ action: 'playSound', soundType: soundType, volume: volume });
+      sendToOffscreen({
+        action: 'playSound',
+        soundType: soundType,
+        volume: volume,
+        target: 'offscreen',
+      });
     }
   );
 }

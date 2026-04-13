@@ -139,13 +139,21 @@ function playSound(soundType = 'classic', volume = 0.5) {
     audioContext
       .resume()
       .then(function () {
-        sound.play(audioContext, volume);
+        try {
+          sound.play(audioContext, volume);
+        } catch (err) {
+          console.error('[Audio] Riproduzione fallita dopo resume:', err.message); // eslint-disable-line no-console
+        }
       })
       .catch(function (err) {
         console.error('[Audio] resume audioContext fallito:', err.message); // eslint-disable-line no-console
       });
   } else {
-    sound.play(audioContext, volume);
+    try {
+      sound.play(audioContext, volume);
+    } catch (err) {
+      console.error('[Audio] Riproduzione fallita:', err.message); // eslint-disable-line no-console
+    }
   }
 }
 

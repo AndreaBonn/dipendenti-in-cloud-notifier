@@ -5,12 +5,7 @@
 
 import { shouldBlink } from '../time-utils.js';
 import { log } from '../shared/logging.js';
-import {
-  VALID_SOUND_TYPES,
-  STATUS_CHECK_MS,
-  BADGE_UPDATE_MS,
-  STARTUP_DELAY_MS,
-} from '../shared/constants.js';
+import { VALID_SOUND_TYPES, STARTUP_DELAY_MS } from '../shared/constants.js';
 import { isAllowedOrigin } from '../shared/validation.js';
 import { storageSet, storageGet, storageRemove } from './storage-helpers.js';
 import {
@@ -49,14 +44,30 @@ function checkShouldBlink(isTimbrato, schedule, callback) {
 /** Open Dipendenti in Cloud in a new or existing tab. */
 function openDipendentiInCloud() {
   chrome.tabs.query({ url: '*://secure.dipendentincloud.it/*' }, function (tabs) {
+    if (chrome.runtime.lastError) {
+      log('[Background] tabs.query fallito:', chrome.runtime.lastError.message);
+      return;
+    }
     if (tabs.length > 0) {
-      chrome.tabs.update(tabs[0].id, { active: true });
-      chrome.windows.update(tabs[0].windowId, { focused: true });
-    } else {
-      chrome.tabs.create({
-        url: 'https://secure.dipendentincloud.it/it/app/dashboard',
-        active: false,
+      chrome.tabs.update(tabs[0].id, { active: true }, function () {
+        if (chrome.runtime.lastError) {
+          log('[Background] tabs.update fallito:', chrome.runtime.lastError.message);
+        }
       });
+      chrome.windows.update(tabs[0].windowId, { focused: true }, function () {
+        if (chrome.runtime.lastError) {
+          log('[Background] windows.update fallito:', chrome.runtime.lastError.message);
+        }
+      });
+    } else {
+      chrome.tabs.create(
+        { url: 'https://secure.dipendentincloud.it/it/app/dashboard', active: false },
+        function () {
+          if (chrome.runtime.lastError) {
+            log('[Background] tabs.create fallito:', chrome.runtime.lastError.message);
+          }
+        }
+      );
     }
   });
 }
@@ -180,7 +191,11 @@ function checkStatusOnStartup() {
 // Click on notification opens Dipendenti in Cloud
 chrome.notifications.onClicked.addListener(function (notificationId) {
   if (notificationId.startsWith('timbratura-')) {
-    chrome.tabs.create({ url: 'https://secure.dipendentincloud.it/it/app/dashboard' });
+    chrome.tabs.create({ url: 'https://secure.dipendentincloud.it/it/app/dashboard' }, function () {
+      if (chrome.runtime.lastError) {
+        log('[Background] tabs.create da notifica fallito:', chrome.runtime.lastError.message);
+      }
+    });
   }
 });
 
@@ -195,7 +210,12 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     const soundType = VALID_SOUND_TYPES.includes(request.soundType) ? request.soundType : 'classic';
     const volume = Math.max(0, Math.min(1, Number(request.volume) || 0.5));
 
-    sendToOffscreen({ action: 'testSound', soundType: soundType, volume: volume });
+    sendToOffscreen({
+      action: 'testSound',
+      soundType: soundType,
+      volume: volume,
+      target: 'offscreen',
+    });
 
     sendResponse({ success: true });
     return true;
@@ -216,10 +236,10 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
   return true;
 });
 
-// --- Periodic checks ---
+// --- Periodic checks (via chrome.alarms — survives service worker termination) ---
 
-// Check blink/sound state every 30 seconds
-setInterval(() => {
+/** Periodic status check: blink/sound state evaluation. */
+function periodicStatusCheck() {
   storageGet(['timbratureStatus', 'mutedSituation', 'lastSituationId'], function (data) {
     if (data && data.timbratureStatus && data.timbratureStatus.isTimbrato !== null) {
       const raw = data.timbratureStatus.isTimbrato;
@@ -257,10 +277,10 @@ setInterval(() => {
       });
     }
   });
-}, STATUS_CHECK_MS);
+}
 
-// Update badge countdown every minute
-setInterval(() => {
+/** Periodic badge update: refresh countdown text. */
+function periodicBadgeUpdate() {
   storageGet('timbratureStatus', function (data) {
     if (data && data.timbratureStatus && data.timbratureStatus.isTimbrato !== null) {
       loadWorkSchedule(function () {
@@ -268,11 +288,29 @@ setInterval(() => {
       });
     }
   });
-}, BADGE_UPDATE_MS);
+}
+
+const ALARM_STATUS_CHECK = 'statusCheck';
+const ALARM_BADGE_UPDATE = 'badgeUpdate';
+
+chrome.alarms.onAlarm.addListener(function (alarm) {
+  if (alarm.name === ALARM_STATUS_CHECK) {
+    periodicStatusCheck();
+  } else if (alarm.name === ALARM_BADGE_UPDATE) {
+    periodicBadgeUpdate();
+  }
+});
 
 // --- Lifecycle events ---
 
+/** Set up periodic alarms (idempotent — safe to call on every wake-up). */
+function ensureAlarms() {
+  chrome.alarms.create(ALARM_STATUS_CHECK, { periodInMinutes: 0.5 });
+  chrome.alarms.create(ALARM_BADGE_UPDATE, { periodInMinutes: 1 });
+}
+
 chrome.runtime.onInstalled.addListener(function () {
+  ensureAlarms();
   syncStateOnWakeUp(function () {
     loadWorkSchedule(function () {
       checkStatusOnStartup();
@@ -281,6 +319,7 @@ chrome.runtime.onInstalled.addListener(function () {
 });
 
 chrome.runtime.onStartup.addListener(function () {
+  ensureAlarms();
   syncStateOnWakeUp(function () {
     loadWorkSchedule(function () {
       checkStatusOnStartup();

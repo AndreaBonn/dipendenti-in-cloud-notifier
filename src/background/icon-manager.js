@@ -33,14 +33,25 @@ export function setIcon(state) {
     },
   };
 
-  chrome.action.setIcon({ path: icons[state] || icons.na });
+  chrome.action.setIcon({ path: icons[state] || icons.na }, function () {
+    if (chrome.runtime.lastError) {
+      console.error('[Icon] setIcon fallito:', chrome.runtime.lastError.message); // eslint-disable-line no-console
+    }
+  });
 
   const badgeColors = {
     green: '#28a745',
     red: '#dc3545',
     na: '#6c757d',
   };
-  chrome.action.setBadgeBackgroundColor({ color: badgeColors[state] || badgeColors.na });
+  chrome.action.setBadgeBackgroundColor(
+    { color: badgeColors[state] || badgeColors.na },
+    function () {
+      if (chrome.runtime.lastError) {
+        console.error('[Icon] setBadgeBackgroundColor fallito:', chrome.runtime.lastError.message); // eslint-disable-line no-console
+      }
+    }
+  );
 }
 
 /**
@@ -51,14 +62,22 @@ export function setIcon(state) {
  */
 export function updateBadgeCountdown(isTimbrato, workSchedule) {
   if (isTimbrato === null) {
-    chrome.action.setBadgeText({ text: '' });
+    chrome.action.setBadgeText({ text: '' }, function () {
+      if (chrome.runtime.lastError) {
+        console.error('[Icon] setBadgeText fallito:', chrome.runtime.lastError.message); // eslint-disable-line no-console
+      }
+    });
     return;
   }
 
   const now = new Date();
   const currentTime = now.getHours() * 60 + now.getMinutes();
   const text = getBadgeText(currentTime, isTimbrato, workSchedule);
-  chrome.action.setBadgeText({ text });
+  chrome.action.setBadgeText({ text }, function () {
+    if (chrome.runtime.lastError) {
+      console.error('[Icon] setBadgeText fallito:', chrome.runtime.lastError.message); // eslint-disable-line no-console
+    }
+  });
 }
 
 /** Stop icon blinking. */

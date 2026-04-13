@@ -152,6 +152,14 @@ document.addEventListener('DOMContentLoaded', function () {
   function checkIfShouldShowMuteButton(isTimbrato) {
     const muteBtn = document.getElementById('mute-notification');
     chrome.storage.local.get(['isBlinking'], function (data) {
+      if (chrome.runtime.lastError) {
+        // eslint-disable-next-line no-console
+        console.warn(
+          '[Popup] checkIfShouldShowMuteButton storage.get fallito:',
+          chrome.runtime.lastError.message
+        );
+        return;
+      }
       if (data.isBlinking && isTimbrato !== null) {
         muteBtn.style.display = 'block';
       } else {
@@ -162,6 +170,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // Load status from storage first, then try real-time from content script
   chrome.storage.local.get('timbratureStatus', function (data) {
+    if (chrome.runtime.lastError) {
+      console.warn('[Popup] Lettura storage iniziale fallita:', chrome.runtime.lastError.message); // eslint-disable-line no-console
+      checkCurrentTab();
+      return;
+    }
     if (data && data.timbratureStatus) {
       updateUI({
         isTimbrato: data.timbratureStatus.isTimbrato,

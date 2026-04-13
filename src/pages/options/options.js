@@ -5,7 +5,12 @@
 
 import { VALID_SOUND_TYPES } from '../../shared/constants.js';
 import { showToast } from './ui-helpers.js';
-import { renderFullDayExclusions, renderHalfDayExclusions, addFullDayExclusion, addHalfDayExclusion } from './exclusion-manager.js';
+import {
+  renderFullDayExclusions,
+  renderHalfDayExclusions,
+  addFullDayExclusion,
+  addHalfDayExclusion,
+} from './exclusion-manager.js';
 import { importAssenze, confirmImport } from './import-manager.js';
 
 // Carica le opzioni salvate
@@ -26,6 +31,10 @@ function loadOptions() {
       soundVolume: 50,
     },
     function (items) {
+      if (chrome.runtime.lastError) {
+        showToast('Errore caricamento impostazioni: ' + chrome.runtime.lastError.message, 'error');
+        return;
+      }
       document.getElementById('autoOpenSite').checked = items.autoOpenSite;
       document.getElementById('excludeWeekends').checked = items.excludeWeekends;
       document.getElementById('morningStart').value = items.morningStart;
@@ -92,16 +101,19 @@ function saveOptions() {
         return;
       }
 
-      const status = document.getElementById('status');
-      status.style.display = 'block';
+      showToast('Opzioni salvate correttamente', 'success');
 
       if (enableNotifications && Notification.permission === 'default') {
-        Notification.requestPermission();
+        Notification.requestPermission()
+          .then(function (permission) {
+            if (permission === 'denied') {
+              showToast('Permesso notifiche negato dal browser', 'warning');
+            }
+          })
+          .catch(function () {
+            // Ignored — non-secure context or already permanently denied
+          });
       }
-
-      setTimeout(function () {
-        status.style.display = 'none';
-      }, 3000);
     }
   );
 }

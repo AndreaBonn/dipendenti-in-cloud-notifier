@@ -5,6 +5,9 @@
 import { showToast, showConfirm, isValidDate, sanitizeDescription } from './ui-helpers.js';
 import { renderFullDayExclusions } from './exclusion-manager.js';
 
+// In-memory store for pending absences (source of truth — DOM is display-only)
+const pendingAssenze = new Map();
+
 // Importa assenze da Dipendenti in Cloud
 export function importAssenze() {
   const importButton = document.getElementById('importAssenze');
@@ -77,6 +80,10 @@ function showImportModal(assenze) {
   const assenzeList = document.getElementById('assenzeList');
 
   chrome.storage.local.get({ fullDayExclusions: [] }, function (items) {
+    if (chrome.runtime.lastError) {
+      showToast('Errore lettura esclusioni: ' + chrome.runtime.lastError.message, 'error');
+      return;
+    }
     const existingDates = items.fullDayExclusions.map((e) => e.date);
 
     assenzeList.textContent = '';
@@ -87,7 +94,9 @@ function showImportModal(assenze) {
       emptyDiv.textContent = 'Nessuna assenza trovata';
       assenzeList.appendChild(emptyDiv);
     } else {
+      pendingAssenze.clear();
       assenze.forEach((assenza, index) => {
+        pendingAssenze.set(index, { date: assenza.date, descrizione: assenza.descrizione });
         const isDuplicate = existingDates.includes(assenza.date);
         const date = new Date(assenza.date);
         const formattedDate = date.toLocaleDateString('it-IT', {
@@ -120,8 +129,6 @@ function showImportModal(assenze) {
         const checkbox = document.createElement('input');
         checkbox.type = 'checkbox';
         checkbox.dataset.index = index;
-        checkbox.dataset.date = assenza.date;
-        checkbox.dataset.description = assenza.descrizione;
         if (isDuplicate) {
           checkbox.disabled = true;
         } else {
@@ -151,18 +158,21 @@ export function confirmImport() {
   }
 
   chrome.storage.local.get({ fullDayExclusions: [] }, function (items) {
+    if (chrome.runtime.lastError) {
+      showToast('Errore lettura esclusioni: ' + chrome.runtime.lastError.message, 'error');
+      return;
+    }
     const exclusions = items.fullDayExclusions;
 
     checkboxes.forEach((checkbox) => {
-      const date = checkbox.getAttribute('data-date');
-      const description = checkbox.getAttribute('data-description') || '';
+      const idx = Number(checkbox.getAttribute('data-index'));
+      const assenza = pendingAssenze.get(idx);
+      if (!assenza || !isValidDate(assenza.date)) return;
 
-      if (!isValidDate(date)) return;
-
-      if (!exclusions.some((e) => e.date === date)) {
+      if (!exclusions.some((e) => e.date === assenza.date)) {
         exclusions.push({
-          date: date,
-          description: sanitizeDescription(description),
+          date: assenza.date,
+          description: sanitizeDescription(assenza.descrizione || ''),
         });
       }
     });

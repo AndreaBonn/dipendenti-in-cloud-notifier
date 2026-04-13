@@ -42,9 +42,9 @@ describe('isAllowedOrigin', () => {
   });
 
   it('rejects origin embedded in path', () => {
-    expect(
-      isAllowedOrigin('https://evil.com/redirect?to=https://secure.dipendentincloud.it')
-    ).toBe(false);
+    expect(isAllowedOrigin('https://evil.com/redirect?to=https://secure.dipendentincloud.it')).toBe(
+      false
+    );
   });
 
   it('returns false for empty string', () => {

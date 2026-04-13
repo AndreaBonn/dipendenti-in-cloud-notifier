@@ -3,6 +3,7 @@
   "version": "2.0.0",
   "description": "Chrome extension (unofficial) for dipendentincloud.it time-clock reminders",
   "private": true,
+  "type": "module",
   "scripts": {
     "lint": "eslint --no-warn-ignored 'src/**/*.js' 'tests/**/*.js'",
     "lint:fix": "eslint --no-warn-ignored 'src/**/*.js' 'tests/**/*.js' --fix",

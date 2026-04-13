@@ -5,6 +5,7 @@
 
 import { checkExclusion, getCountdownTarget } from '../../time-utils.js';
 import { parseTimeToHoursMinutes } from '../../shared/validation.js';
+import { DEFAULT_SCHEDULE_STRINGS } from '../../shared/constants.js';
 
 let countdownInterval = null;
 
@@ -77,10 +78,10 @@ export function updateCountdown(isTimbrato, countdownElement) {
     // Load schedule once, then start the tick interval
     chrome.storage.local.get(
       {
-        morningStart: '09:00',
-        lunchEnd: '13:00',
-        afternoonStart: '14:00',
-        eveningEnd: '18:00',
+        morningStart: DEFAULT_SCHEDULE_STRINGS.morningStart,
+        lunchEnd: DEFAULT_SCHEDULE_STRINGS.lunchEnd,
+        afternoonStart: DEFAULT_SCHEDULE_STRINGS.afternoonStart,
+        eveningEnd: DEFAULT_SCHEDULE_STRINGS.eveningEnd,
       },
       function (scheduleData) {
         const mStart = parseTimeToHoursMinutes(scheduleData.morningStart);

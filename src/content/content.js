@@ -10,6 +10,9 @@ function logWarn(...args) {
   console.warn('[Timbratura]', ...args); // eslint-disable-line no-console
 }
 
+// SYNC: must match ALLOWED_ORIGINS in src/shared/constants.js (content scripts cannot use ES modules)
+const ALLOWED_HOSTNAMES = ['secure.dipendentincloud.it', 'cloud.dipendentincloud.it'];
+
 // Throttle for clickTimbra to prevent accidental double clicks (5 second lock)
 const CLICK_TIMBRA_COOLDOWN_MS = 5000;
 let lastClickTimbraTime = 0;
@@ -179,10 +182,7 @@ function checkTimbratura() {
   let timbratureOggi = [];
 
   // Verifichiamo se siamo nella pagina di Dipendenti in Cloud
-  if (
-    document.location.href.includes('secure.dipendentincloud.it') ||
-    document.location.href.includes('cloud.dipendentincloud.it')
-  ) {
+  if (ALLOWED_HOSTNAMES.includes(document.location.hostname)) {
     log('[Timbratura] Inizio controllo stato...');
 
     // Estrai le timbrature di oggi
@@ -316,6 +316,10 @@ function checkTimbratura() {
   } else {
     // Se non siamo nella pagina corretta, recuperiamo lo stato dalla storage
     chrome.storage.local.get('timbratureStatus', function (data) {
+      if (chrome.runtime.lastError) {
+        logError('storage.get timbratureStatus fallito:', chrome.runtime.lastError.message);
+        return;
+      }
       if (data && data.timbratureStatus) {
         log('Stato timbratura recuperato dalla storage:', data.timbratureStatus);
 
@@ -344,8 +348,9 @@ function checkTimbratura() {
 // Funzione per verificare se il runtime è ancora valido
 function isRuntimeValid() {
   try {
-    return chrome.runtime && chrome.runtime.id;
-  } catch (_error) {
+    return !!(chrome.runtime && chrome.runtime.id);
+  } catch (error) {
+    logWarn('chrome.runtime non accessibile:', error.message);
     return false;
   }
 }
@@ -541,11 +546,21 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
 
   if (request.action === 'getStatus') {
     // Se siamo nella pagina di Dipendenti in Cloud, controlliamo lo stato in tempo reale
-    if (document.location.href.includes('secure.dipendentincloud.it')) {
+    if (ALLOWED_HOSTNAMES.includes(document.location.hostname)) {
       sendResponse(checkTimbratura());
     } else {
       // Altrimenti recuperiamo lo stato dalla storage
       chrome.storage.local.get('timbratureStatus', function (data) {
+        if (chrome.runtime.lastError) {
+          logError('storage.get timbratureStatus fallito:', chrome.runtime.lastError.message);
+          sendResponse({
+            isTimbrato: null,
+            lastTimbratura: '',
+            timbratureOggi: [],
+            fromStorage: false,
+          });
+          return;
+        }
         if (data && data.timbratureStatus) {
           sendResponse({
             isTimbrato: data.timbratureStatus.isTimbrato,
