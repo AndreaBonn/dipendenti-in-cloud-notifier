@@ -3,7 +3,8 @@
  */
 
 import { logError } from '../shared/logging.js';
-import { VALID_SOUND_TYPES, SOUND_REPEAT_MS } from '../shared/constants.js';
+import { SOUND_REPEAT_MS } from '../shared/constants.js';
+import { normalizeVolume, normalizeSoundType } from '../shared/validation.js';
 import { storageGet } from './storage-helpers.js';
 
 let soundInterval = null;
@@ -58,11 +59,8 @@ function playNotificationSound() {
     function (options) {
       if (!options.enableSound) return;
 
-      const soundType = VALID_SOUND_TYPES.includes(options.soundType)
-        ? options.soundType
-        : 'classic';
-      const rawVolume = Number(options.soundVolume / 100);
-      const volume = Math.max(0, Math.min(1, Number.isFinite(rawVolume) ? rawVolume : 0.5));
+      const soundType = normalizeSoundType(options.soundType);
+      const volume = normalizeVolume(options.soundVolume, true);
 
       sendToOffscreen({
         action: 'playSound',

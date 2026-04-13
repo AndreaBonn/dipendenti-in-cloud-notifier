@@ -5,8 +5,8 @@
 
 import { shouldBlink } from '../time-utils.js';
 import { log } from '../shared/logging.js';
-import { VALID_SOUND_TYPES, STARTUP_DELAY_MS } from '../shared/constants.js';
-import { isAllowedOrigin } from '../shared/validation.js';
+import { STARTUP_DELAY_MS } from '../shared/constants.js';
+import { isAllowedOrigin, normalizeVolume, normalizeSoundType } from '../shared/validation.js';
 import { storageSet, storageGet, storageRemove } from './storage-helpers.js';
 import {
   setIcon,
@@ -215,9 +215,8 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
   if (!request || typeof request !== 'object' || !VALID_ACTIONS.includes(request.action)) return;
 
   if (request.action === 'testSound') {
-    const soundType = VALID_SOUND_TYPES.includes(request.soundType) ? request.soundType : 'classic';
-    const rawVolume = Number(request.volume);
-    const volume = Math.max(0, Math.min(1, Number.isFinite(rawVolume) ? rawVolume : 0.5));
+    const soundType = normalizeSoundType(request.soundType);
+    const volume = normalizeVolume(request.volume);
 
     sendToOffscreen({
       action: 'testSound',

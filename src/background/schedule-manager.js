@@ -5,9 +5,8 @@
 import { timeToMinutes, checkExclusion, getSituationId } from '../time-utils.js';
 import { DEFAULT_SCHEDULE_STRINGS } from '../shared/constants.js';
 import { logError } from '../shared/logging.js';
+import { isValidTimeString, filterValidExclusions } from '../shared/validation.js';
 import { storageGet } from './storage-helpers.js';
-
-const TIME_PATTERN = /^\d{1,2}:\d{2}$/;
 
 const workSchedule = {
   morningStart: 9 * 60,
@@ -33,7 +32,7 @@ export function loadWorkSchedule(callback) {
     function (items) {
       const fields = ['morningStart', 'lunchEnd', 'afternoonStart', 'eveningEnd'];
       for (const field of fields) {
-        if (typeof items[field] === 'string' && TIME_PATTERN.test(items[field])) {
+        if (isValidTimeString(items[field])) {
           workSchedule[field] = timeToMinutes(items[field]);
         } else {
           logError('loadWorkSchedule: valore invalido per', field, items[field]);
@@ -66,12 +65,8 @@ export function isExcludedDay(callback) {
     },
     function (options) {
       const now = new Date();
-      const safeFullDay = Array.isArray(options.fullDayExclusions)
-        ? options.fullDayExclusions.filter((e) => e && typeof e.date === 'string')
-        : [];
-      const safeHalfDay = Array.isArray(options.halfDayExclusions)
-        ? options.halfDayExclusions.filter((e) => e && typeof e.date === 'string')
-        : [];
+      const safeFullDay = filterValidExclusions(options.fullDayExclusions);
+      const safeHalfDay = filterValidExclusions(options.halfDayExclusions);
 
       const result = checkExclusion({
         dayOfWeek: now.getDay(),
