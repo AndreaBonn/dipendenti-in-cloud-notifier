@@ -1,18 +1,9 @@
-# Documenti commerciali e marketing
-PROPOSTA_COMMERCIALE.md
-SCHEDA_PRODOTTO.md
-SUONI_NOTIFICA.md
-GUIDA_OPZIONI.md
-
 # IDE e configurazioni editor
 .vscode/
 .idea/
 *.code-workspace
 
 # File con credenziali e configurazioni sensibili
-*.env
-*.env.local
-*.env.production
 .env
 .env.*
 !.env.example
@@ -28,11 +19,8 @@ credentials.json
 *.log
 *.tmp
 *.temp
-.DS_Store
-Thumbs.db
-desktop.ini
 
-# Node modules (se presenti)
+# Node modules
 node_modules/
 npm-debug.log*
 yarn-debug.log*
@@ -43,7 +31,6 @@ dist/
 build/
 *.zip
 *.crx
-*.pem
 
 # Backup e file di sistema
 *~
@@ -64,6 +51,7 @@ coverage/
 ._*
 .Spotlight-V100
 .Trashes
+Thumbs.db
 ehthumbs.db
 Desktop.ini
 $RECYCLE.BIN/
