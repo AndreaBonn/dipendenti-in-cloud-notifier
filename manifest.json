@@ -14,8 +14,9 @@
     }
   },
   "content_security_policy": {
-    "extension_pages": "script-src 'self'; object-src 'self'"
+    "extension_pages": "default-src 'none'; script-src 'self'; object-src 'none'; connect-src 'none'; img-src 'self'; style-src 'self'; frame-src 'none'"
   },
+  "minimum_chrome_version": "116",
   "permissions": ["activeTab", "storage", "offscreen", "notifications"],
   "host_permissions": ["*://secure.dipendentincloud.it/*", "*://cloud.dipendentincloud.it/*"],
   "content_scripts": [

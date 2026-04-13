@@ -179,6 +179,8 @@ function renderHalfDayExclusions(exclusions) {
 const MAX_EXCLUSIONS = 365;
 const MAX_DESCRIPTION_LENGTH = 100;
 const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
+const VALID_PERIODS = ['morning', 'afternoon'];
+const VALID_SOUND_TYPES = ['classic', 'urgent', 'gentle', 'bell', 'digital', 'alarm'];
 
 function isValidDate(dateStr) {
   return DATE_REGEX.test(dateStr) && !isNaN(new Date(dateStr).getTime());
@@ -223,6 +225,10 @@ function addFullDayExclusion() {
     });
 
     chrome.storage.local.set({ fullDayExclusions: exclusions }, function () {
+      if (chrome.runtime.lastError) {
+        showToast('Errore nel salvataggio: ' + chrome.runtime.lastError.message, 'error');
+        return;
+      }
       renderFullDayExclusions(exclusions);
       dateInput.value = '';
       descriptionInput.value = '';
@@ -243,6 +249,11 @@ function addHalfDayExclusion() {
 
   if (!isValidDate(dateInput.value)) {
     showToast('Data non valida', 'error');
+    return;
+  }
+
+  if (!VALID_PERIODS.includes(periodInput.value)) {
+    showToast('Periodo non valido', 'error');
     return;
   }
 
@@ -267,6 +278,10 @@ function addHalfDayExclusion() {
     });
 
     chrome.storage.local.set({ halfDayExclusions: exclusions }, function () {
+      if (chrome.runtime.lastError) {
+        showToast('Errore nel salvataggio: ' + chrome.runtime.lastError.message, 'error');
+        return;
+      }
       renderHalfDayExclusions(exclusions);
       dateInput.value = '';
       descriptionInput.value = '';
@@ -280,6 +295,10 @@ function removeFullDayExclusion(date) {
     const exclusions = items.fullDayExclusions.filter((e) => e.date !== date);
 
     chrome.storage.local.set({ fullDayExclusions: exclusions }, function () {
+      if (chrome.runtime.lastError) {
+        showToast('Errore nella rimozione: ' + chrome.runtime.lastError.message, 'error');
+        return;
+      }
       renderFullDayExclusions(exclusions);
     });
   });
@@ -293,6 +312,10 @@ function removeHalfDayExclusion(date, period) {
     );
 
     chrome.storage.local.set({ halfDayExclusions: exclusions }, function () {
+      if (chrome.runtime.lastError) {
+        showToast('Errore nella rimozione: ' + chrome.runtime.lastError.message, 'error');
+        return;
+      }
       renderHalfDayExclusions(exclusions);
     });
   });
@@ -309,7 +332,7 @@ function saveOptions() {
   const enableNotifications = document.getElementById('enableNotifications').checked;
   const enableSound = document.getElementById('enableSound').checked;
   const soundType = document.getElementById('soundType').value;
-  const soundVolume = parseInt(document.getElementById('soundVolume').value);
+  const soundVolume = parseInt(document.getElementById('soundVolume').value, 10);
 
   // Validazione formato HH:MM
   const TIME_REGEX = /^([01]\d|2[0-3]):[0-5]\d$/;
@@ -341,6 +364,11 @@ function saveOptions() {
       soundVolume: soundVolume,
     },
     function () {
+      if (chrome.runtime.lastError) {
+        showToast('Errore nel salvataggio: ' + chrome.runtime.lastError.message, 'error');
+        return;
+      }
+
       // Mostra il messaggio di conferma
       const status = document.getElementById('status');
       status.style.display = 'block';
@@ -526,6 +554,10 @@ function confirmImport() {
     });
 
     chrome.storage.local.set({ fullDayExclusions: exclusions }, function () {
+      if (chrome.runtime.lastError) {
+        showToast('Errore nel salvataggio: ' + chrome.runtime.lastError.message, 'error');
+        return;
+      }
       // Chiudi il modal
       document.getElementById('importModal').style.display = 'none';
 
@@ -540,15 +572,19 @@ function confirmImport() {
 
 // Funzione per testare il suono
 function testSound() {
-  const soundType = document.getElementById('soundType').value;
-  const soundVolume = parseInt(document.getElementById('soundVolume').value) / 100;
+  const rawSoundType = document.getElementById('soundType').value;
+  const soundType = VALID_SOUND_TYPES.includes(rawSoundType) ? rawSoundType : 'classic';
+  const soundVolume = parseInt(document.getElementById('soundVolume').value, 10) / 100;
 
   // Invia messaggio al background per creare offscreen document e riprodurre suono
-  chrome.runtime.sendMessage({
-    action: 'testSound',
-    soundType: soundType,
-    volume: soundVolume,
-  });
+  chrome.runtime.sendMessage(
+    { action: 'testSound', soundType: soundType, volume: soundVolume },
+    function () {
+      if (chrome.runtime.lastError) {
+        showToast('Test suono fallito: ' + chrome.runtime.lastError.message, 'error');
+      }
+    }
+  );
 }
 
 // Carica le opzioni quando la pagina viene aperta
@@ -573,19 +609,19 @@ document.addEventListener('DOMContentLoaded', function () {
   const cancelBtn = document.getElementById('cancelImport');
   const confirmBtn = document.getElementById('confirmImport');
 
-  closeBtn.onclick = function () {
+  closeBtn.addEventListener('click', function () {
     modal.style.display = 'none';
-  };
+  });
 
-  cancelBtn.onclick = function () {
+  cancelBtn.addEventListener('click', function () {
     modal.style.display = 'none';
-  };
+  });
 
-  confirmBtn.onclick = confirmImport;
+  confirmBtn.addEventListener('click', confirmImport);
 
-  window.onclick = function (event) {
+  window.addEventListener('click', function (event) {
     if (event.target === modal) {
       modal.style.display = 'none';
     }
-  };
+  });
 });

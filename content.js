@@ -2,6 +2,13 @@ const DEBUG = false;
 function log(...args) {
   if (DEBUG) console.log(...args); // eslint-disable-line no-console
 }
+// Always-visible error/warning logging (never suppressed by DEBUG flag)
+function logError(...args) {
+  console.error('[Timbratura]', ...args); // eslint-disable-line no-console
+}
+function logWarn(...args) {
+  console.warn('[Timbratura]', ...args); // eslint-disable-line no-console
+}
 
 // Funzione per estrarre le timbrature di oggi
 function extractTimbratureOggi() {
@@ -275,18 +282,27 @@ function checkTimbratura() {
     };
 
     chrome.storage.local.set({ timbratureStatus: statusData }, function () {
+      if (chrome.runtime.lastError) {
+        logError('Impossibile salvare stato timbratura:', chrome.runtime.lastError.message);
+        return;
+      }
       log('[Timbratura] Stato salvato:', statusData);
     });
 
     // Aggiorniamo l'icona dell'estensione
-    try {
-      chrome.runtime.sendMessage({
-        action: 'updateIcon',
+    if (!isRuntimeValid()) {
+      logWarn('Estensione non disponibile, impossibile aggiornare icona');
+      return {
         isTimbrato: isTimbrato,
-      });
-    } catch (error) {
-      log('[Timbratura] Errore invio messaggio (estensione ricaricata?):', error);
+        lastTimbratura: lastTimbratura,
+        timbratureOggi: timbratureOggi,
+      };
     }
+    chrome.runtime.sendMessage({ action: 'updateIcon', isTimbrato: isTimbrato }, function () {
+      if (chrome.runtime.lastError) {
+        logWarn('sendMessage updateIcon fallito:', chrome.runtime.lastError.message);
+      }
+    });
   } else {
     // Se non siamo nella pagina corretta, recuperiamo lo stato dalla storage
     chrome.storage.local.get('timbratureStatus', function (data) {
@@ -294,13 +310,15 @@ function checkTimbratura() {
         log('Stato timbratura recuperato dalla storage:', data.timbratureStatus);
 
         // Aggiorniamo l'icona dell'estensione con lo stato memorizzato
-        try {
-          chrome.runtime.sendMessage({
-            action: 'updateIcon',
-            isTimbrato: data.timbratureStatus.isTimbrato,
-          });
-        } catch (error) {
-          log('[Timbratura] Errore invio messaggio (estensione ricaricata?):', error);
+        if (isRuntimeValid()) {
+          chrome.runtime.sendMessage(
+            { action: 'updateIcon', isTimbrato: data.timbratureStatus.isTimbrato },
+            function () {
+              if (chrome.runtime.lastError) {
+                logWarn('sendMessage updateIcon fallito:', chrome.runtime.lastError.message);
+              }
+            }
+          );
         }
       }
     });
@@ -322,10 +340,11 @@ function isRuntimeValid() {
   }
 }
 
+const DEBOUNCE_DELAY = 500; // ms — evita check multipli su micro-mutazioni DOM della SPA
+
 // Funzione per osservare cambiamenti nella pagina
 function setupObserver() {
   let debounceTimer = null;
-  const DEBOUNCE_DELAY = 500; // ms — evita check multipli su micro-mutazioni DOM della SPA
 
   const observer = new MutationObserver(function (_mutations) {
     if (isRuntimeValid()) {

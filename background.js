@@ -11,6 +11,54 @@ const DEBUG = false;
 function log(...args) {
   if (DEBUG) console.log(...args); // eslint-disable-line no-console
 }
+// Always-visible error/warning logging (never suppressed by DEBUG flag)
+function logError(...args) {
+  console.error('[Timbratura]', ...args); // eslint-disable-line no-console
+}
+// eslint-disable-next-line no-unused-vars
+function logWarn(...args) {
+  console.warn('[Timbratura]', ...args); // eslint-disable-line no-console
+}
+
+// Send a message to the offscreen document, creating it if needed.
+// Adds a small delay after fresh creation to ensure the listener is registered.
+function sendToOffscreen(message) {
+  function doSend() {
+    chrome.runtime.sendMessage(message, function () {
+      if (chrome.runtime.lastError) {
+        logError('sendMessage to offscreen fallito:', chrome.runtime.lastError.message);
+      }
+    });
+  }
+
+  chrome.offscreen
+    .createDocument({
+      url: 'offscreen.html',
+      reasons: ['AUDIO_PLAYBACK'],
+      justification: 'Riproduzione suono di notifica',
+    })
+    .then(() => {
+      // Fresh creation — small delay to let the listener register
+      setTimeout(doSend, 50);
+    })
+    .catch((error) => {
+      if (error.message.includes('Only a single offscreen')) {
+        doSend(); // Already exists, listener is ready
+      } else {
+        logError('Errore offscreen non recuperabile:', error.message);
+      }
+    });
+}
+
+// Safe wrapper for chrome.storage.local.set with lastError check
+function storageSet(data, callback) {
+  chrome.storage.local.set(data, function () {
+    if (chrome.runtime.lastError) {
+      logError('storage.set fallito:', chrome.runtime.lastError.message, Object.keys(data));
+    }
+    if (callback) callback();
+  });
+}
 
 // Timing constants
 const SOUND_REPEAT_MS = 5 * 60 * 1000;
@@ -160,31 +208,7 @@ function playNotificationSound() {
         : 'classic';
       const volume = Math.max(0, Math.min(1, Number(options.soundVolume / 100) || 0.5));
 
-      // Creiamo un offscreen document per riprodurre l'audio
-      chrome.offscreen
-        .createDocument({
-          url: 'offscreen.html',
-          reasons: ['AUDIO_PLAYBACK'],
-          justification: 'Riproduzione suono di notifica per timbratura mancante',
-        })
-        .then(() => {
-          chrome.runtime.sendMessage({
-            action: 'playSound',
-            soundType: soundType,
-            volume: volume,
-          });
-        })
-        .catch((error) => {
-          if (error.message.includes('Only a single offscreen')) {
-            chrome.runtime.sendMessage({
-              action: 'playSound',
-              soundType: soundType,
-              volume: volume,
-            });
-          } else {
-            log('[Audio] Errore offscreen non recuperabile:', error.message);
-          }
-        });
+      sendToOffscreen({ action: 'playSound', soundType: soundType, volume: volume });
     }
   );
 }
@@ -299,7 +323,7 @@ function checkAndSendNotifications(currentTime, isTimbrato) {
     // Aggiorna in-memory e persisti solo se cambiato
     notificationsSent = stored;
     if (changed) {
-      chrome.storage.local.set({ notificationsSent: stored });
+      storageSet({ notificationsSent: stored });
     }
   });
 }
@@ -315,45 +339,30 @@ function getCurrentSituationId() {
 // Allowed origins for content script messages
 const ALLOWED_ORIGINS = ['https://secure.dipendentincloud.it', 'https://cloud.dipendentincloud.it'];
 
+// Validate URL origin against allowlist using URL parser (prevents subdomain bypass)
+function isAllowedOrigin(url) {
+  try {
+    const parsed = new URL(url);
+    return ALLOWED_ORIGINS.includes(parsed.origin);
+  } catch (_error) {
+    return false;
+  }
+}
+
 // Gestione dei messaggi dal content script
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
   // Accetta solo messaggi dall'estensione stessa
   if (sender.id !== chrome.runtime.id) return;
 
   // Defense-in-depth: validate origin for content script messages
-  if (sender.tab && (!sender.tab.url || !ALLOWED_ORIGINS.some((o) => sender.tab.url.startsWith(o))))
-    return;
+  if (sender.tab && (!sender.tab.url || !isAllowedOrigin(sender.tab.url))) return;
 
   if (request.action === 'testSound') {
     // Test del suono dalle opzioni — validate against whitelist
     const soundType = VALID_SOUND_TYPES.includes(request.soundType) ? request.soundType : 'classic';
     const volume = Math.max(0, Math.min(1, Number(request.volume) || 0.5));
 
-    chrome.offscreen
-      .createDocument({
-        url: 'offscreen.html',
-        reasons: ['AUDIO_PLAYBACK'],
-        justification: 'Test suono notifica',
-      })
-      .then(() => {
-        chrome.runtime.sendMessage({
-          action: 'testSound',
-          soundType: soundType,
-          volume: volume,
-        });
-      })
-      .catch((error) => {
-        if (error.message.includes('Only a single offscreen')) {
-          chrome.runtime.sendMessage({
-            action: 'testSound',
-            soundType: soundType,
-            volume: volume,
-          });
-        } else {
-          log('[Audio] Errore test suono:', error.message);
-          sendResponse({ success: false, error: error.message });
-        }
-      });
+    sendToOffscreen({ action: 'testSound', soundType: soundType, volume: volume });
 
     sendResponse({ success: true });
     return true;
@@ -380,19 +389,19 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
             if (data.mutedSituation === situationId) {
               // Situazione silenziata, solo lampeggia senza suono
               startBlinking(baseState);
-              chrome.storage.local.set({ isBlinking: true });
+              storageSet({ isBlinking: true });
             } else {
               // Situazione non silenziata, lampeggia e suona
               startBlinking(baseState);
               startSound();
-              chrome.storage.local.set({ isBlinking: true });
+              storageSet({ isBlinking: true });
             }
           });
         } else {
           stopBlinking();
           stopSound();
           setIcon(baseState);
-          chrome.storage.local.set({ isBlinking: false });
+          storageSet({ isBlinking: false });
         }
         // Aggiorna il badge countdown
         updateBadgeCountdown(isTimbrato);
@@ -401,14 +410,14 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
       stopBlinking();
       stopSound();
       setIcon(baseState);
-      chrome.storage.local.set({ isBlinking: false });
+      storageSet({ isBlinking: false });
       updateBadgeCountdown(isTimbrato);
     }
   } else if (request.action === 'muteNotification') {
     // Silenzia la notifica per la situazione corrente
     const situationId = getCurrentSituationId();
     if (situationId) {
-      chrome.storage.local.set({ mutedSituation: situationId }, function () {
+      storageSet({ mutedSituation: situationId }, function () {
         stopSound();
         sendResponse({ success: true });
       });
@@ -426,7 +435,9 @@ setInterval(() => {
     ['timbratureStatus', 'mutedSituation', 'lastSituationId'],
     function (data) {
       if (data && data.timbratureStatus && data.timbratureStatus.isTimbrato !== null) {
-        const isTimbrato = Boolean(data.timbratureStatus.isTimbrato);
+        const raw = data.timbratureStatus.isTimbrato;
+        const isTimbrato = raw === true ? true : raw === false ? false : null;
+        if (isTimbrato === null) return;
         const baseState = isTimbrato ? 'green' : 'red';
 
         checkShouldBlink(isTimbrato, function (shouldBlink) {
@@ -440,7 +451,7 @@ setInterval(() => {
             // Se la situazione è cambiata, riavvia il suono anche se già lampeggia
             if (situationChanged && currentSituationId) {
               log('[Background] Situazione cambiata:', lastSituationId, '->', currentSituationId);
-              chrome.storage.local.set({ lastSituationId: currentSituationId });
+              storageSet({ lastSituationId: currentSituationId });
 
               // Rimuovi il vecchio silenziamento
               chrome.storage.local.remove('mutedSituation');
@@ -449,29 +460,29 @@ setInterval(() => {
               stopSound();
               startBlinking(baseState);
               startSound();
-              chrome.storage.local.set({ isBlinking: true });
+              storageSet({ isBlinking: true });
             } else if (!isBlinking) {
               // Prima volta che deve lampeggiare
               if (data.mutedSituation === currentSituationId) {
                 // Situazione silenziata, solo lampeggia
                 startBlinking(baseState);
-                chrome.storage.local.set({ isBlinking: true });
+                storageSet({ isBlinking: true });
               } else {
                 // Situazione non silenziata
                 startBlinking(baseState);
                 startSound();
-                chrome.storage.local.set({ isBlinking: true });
+                storageSet({ isBlinking: true });
               }
 
               if (currentSituationId) {
-                chrome.storage.local.set({ lastSituationId: currentSituationId });
+                storageSet({ lastSituationId: currentSituationId });
               }
             }
           } else if (!shouldBlink && isBlinking) {
             stopBlinking();
             stopSound();
             setIcon(baseState);
-            chrome.storage.local.set({ isBlinking: false });
+            storageSet({ isBlinking: false });
 
             // Rimuovi il silenziamento quando la situazione cambia
             chrome.storage.local.remove('mutedSituation');
@@ -563,9 +574,14 @@ function openDipendentiInCloud() {
 // module-level variables reset to defaults while storage retains stale values.
 function syncStateOnWakeUp(callback) {
   chrome.storage.local.get(['isBlinking', 'notificationsSent'], function (data) {
+    if (chrome.runtime.lastError) {
+      logError('syncStateOnWakeUp storage.get fallito:', chrome.runtime.lastError.message);
+      if (callback) callback();
+      return;
+    }
     if (data.isBlinking && !isBlinking) {
       // Storage says blinking but worker just woke up — reset stale flag
-      chrome.storage.local.set({ isBlinking: false });
+      storageSet({ isBlinking: false });
     }
     // Restore persisted notificationsSent to in-memory variable
     if (data.notificationsSent) {
@@ -595,7 +611,13 @@ function checkStatusOnStartup() {
   // Controlliamo lo stato salvato E forziamo un controllo immediato
   chrome.storage.local.get('timbratureStatus', function (data) {
     if (data && data.timbratureStatus && data.timbratureStatus.isTimbrato !== null) {
-      const isTimbrato = Boolean(data.timbratureStatus.isTimbrato);
+      const raw = data.timbratureStatus.isTimbrato;
+      const isTimbrato = raw === true ? true : raw === false ? false : null;
+      if (isTimbrato === null) {
+        setIcon('na');
+        updateBadgeCountdown(null);
+        return;
+      }
       const baseState = isTimbrato ? 'green' : 'red';
 
       checkShouldBlink(isTimbrato, function (shouldBlink) {
@@ -606,12 +628,12 @@ function checkStatusOnStartup() {
             if (mutedData.mutedSituation === situationId) {
               // Situazione silenziata, solo lampeggia
               startBlinking(baseState);
-              chrome.storage.local.set({ isBlinking: true });
+              storageSet({ isBlinking: true });
             } else {
               // Situazione non silenziata, lampeggia, suona E invia notifica
               startBlinking(baseState);
               startSound();
-              chrome.storage.local.set({ isBlinking: true });
+              storageSet({ isBlinking: true });
 
               // Invia notifica immediata all'avvio se necessario
               sendStartupNotification(isTimbrato);

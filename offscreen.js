@@ -134,12 +134,17 @@ function playSound(soundType = 'classic', volume = 0.5) {
 
   // Riprendi il contesto se è sospeso (policy browser)
   if (audioContext.state === 'suspended') {
-    audioContext.resume();
+    audioContext.resume().catch(function (err) {
+      console.error('[Audio] resume audioContext fallito:', err.message); // eslint-disable-line no-console
+    });
   }
 
   const sound = SOUNDS[soundType] || SOUNDS.classic;
   sound.play(audioContext, volume);
 }
+
+// Valid sound types whitelist (local copy for defense-in-depth)
+const VALID_SOUND_TYPES = Object.keys(SOUNDS);
 
 // Ascoltiamo i messaggi dal background script
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
@@ -149,16 +154,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   // Ignore messages not targeted at the offscreen document
   if (request.target && request.target !== 'offscreen') return;
 
-  if (request.action === 'playSound') {
-    const soundType = request.soundType || 'classic';
-    const volume = request.volume !== undefined ? request.volume : 0.5;
-
-    playSound(soundType, volume);
-    sendResponse({ success: true });
-  } else if (request.action === 'testSound') {
-    // Per testare i suoni dalle opzioni
-    const soundType = request.soundType || 'classic';
-    const volume = request.volume !== undefined ? request.volume : 0.5;
+  if (request.action === 'playSound' || request.action === 'testSound') {
+    const soundType = VALID_SOUND_TYPES.includes(request.soundType) ? request.soundType : 'classic';
+    const volume =
+      request.volume !== undefined ? Math.max(0, Math.min(1, Number(request.volume) || 0.5)) : 0.5;
 
     playSound(soundType, volume);
     sendResponse({ success: true });

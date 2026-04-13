@@ -1,5 +1,10 @@
 import { checkExclusion, getCountdownTarget } from './src/time-utils.js';
 
+// Always-visible warning logging for popup diagnostics
+function logWarn(...args) {
+  console.warn('[Timbratura Popup]', ...args); // eslint-disable-line no-console
+}
+
 document.addEventListener('DOMContentLoaded', function () {
   const statusContainer = document.getElementById('status-container');
   const statusElement = document.getElementById('status');
@@ -28,6 +33,10 @@ document.addEventListener('DOMContentLoaded', function () {
   const muteButton = document.getElementById('mute-notification');
   muteButton.addEventListener('click', function () {
     chrome.runtime.sendMessage({ action: 'muteNotification' }, function (response) {
+      if (chrome.runtime.lastError) {
+        logWarn('muteNotification fallito:', chrome.runtime.lastError.message);
+        return;
+      }
       if (response && response.success) {
         muteButton.textContent = '✓ Notifica silenziata';
         muteButton.style.backgroundColor = '#28a745';
@@ -40,12 +49,17 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   });
 
+  const TIME_FORMAT = /^\d{1,2}:\d{2}$/;
+
   // Funzione per mostrare lo storico delle timbrature
   function showStorico(timbrature) {
     const storicoSection = document.getElementById('storico-section');
     const storicoList = document.getElementById('storico-list');
 
-    if (!timbrature || timbrature.length === 0) {
+    // Filter out any malformed time strings from external DOM data
+    const validTimbrature = (timbrature || []).filter((t) => TIME_FORMAT.test(t));
+
+    if (validTimbrature.length === 0) {
       storicoList.textContent = '';
       const emptyDiv = document.createElement('div');
       emptyDiv.className = 'storico-empty';
@@ -56,7 +70,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     storicoList.textContent = '';
-    timbrature.forEach((timb, index) => {
+    validTimbrature.forEach((timb, index) => {
       const item = document.createElement('div');
       const tipo = index % 2 === 0 ? 'entrata' : 'uscita';
       const tipoLabel = index % 2 === 0 ? 'Entrata' : 'Uscita';
@@ -174,9 +188,15 @@ document.addEventListener('DOMContentLoaded', function () {
     );
   }
 
-  // Converte "HH:MM" → {h, m}
+  // Converte "HH:MM" → {h, m} with validation
   function parseTimeToHoursMinutes(timeStr) {
+    if (!timeStr || typeof timeStr !== 'string' || !timeStr.includes(':')) {
+      return { h: 0, m: 0 };
+    }
     const [h, m] = timeStr.split(':').map(Number);
+    if (isNaN(h) || isNaN(m)) {
+      return { h: 0, m: 0 };
+    }
     return { h, m };
   }
 
@@ -251,6 +271,11 @@ document.addEventListener('DOMContentLoaded', function () {
     loadingElement.style.display = 'none';
     statusContainer.style.display = 'block';
 
+    // Reset previous state classes before applying new ones
+    statusElement.classList.remove('timbrato', 'non-timbrato', 'non-disponibile');
+    statusIcon.classList.remove('green', 'red', 'gray');
+    statusText.classList.remove('text-green', 'text-red', 'text-gray');
+
     if (status.isTimbrato === true) {
       // Stato timbrato (verde)
       statusElement.classList.add('timbrato');
@@ -316,6 +341,7 @@ document.addEventListener('DOMContentLoaded', function () {
       updateUI({
         isTimbrato: data.timbratureStatus.isTimbrato,
         lastTimbratura: data.timbratureStatus.lastTimbratura,
+        timbratureOggi: data.timbratureStatus.timbratureOggi || [],
         fromStorage: true,
         lastChecked: data.timbratureStatus.lastChecked,
       });
@@ -345,12 +371,19 @@ document.addEventListener('DOMContentLoaded', function () {
 
       const currentTab = tabs[0];
 
-      // Only send messages to tabs running on the expected domain
-      if (
-        !currentTab.url ||
-        (!currentTab.url.startsWith('https://secure.dipendentincloud.it') &&
-          !currentTab.url.startsWith('https://cloud.dipendentincloud.it'))
-      ) {
+      // Only send messages to tabs running on the expected domain (use URL parser to prevent subdomain bypass)
+      function isTabAllowed(url) {
+        try {
+          const parsed = new URL(url || '');
+          return [
+            'https://secure.dipendentincloud.it',
+            'https://cloud.dipendentincloud.it',
+          ].includes(parsed.origin);
+        } catch (_error) {
+          return false;
+        }
+      }
+      if (!isTabAllowed(currentTab.url)) {
         // Tab is not on dipendentincloud — skip message, rely on storage data
         return;
       }
@@ -358,6 +391,10 @@ document.addEventListener('DOMContentLoaded', function () {
       // Chiediamo lo stato al content script
       chrome.tabs.sendMessage(currentTab.id, { action: 'getStatus' }, function (response) {
         if (chrome.runtime.lastError || !response) {
+          logWarn(
+            'sendMessage getStatus:',
+            chrome.runtime.lastError?.message || 'nessuna risposta'
+          );
           // Errore o nessuna risposta dal content script
           // Se non abbiamo già aggiornato l'UI con i dati dalla storage, lo facciamo ora
           if (loadingElement.style.display !== 'none') {
@@ -378,4 +415,11 @@ document.addEventListener('DOMContentLoaded', function () {
       });
     });
   }
+
+  // Cleanup interval on popup close to prevent leaks
+  window.addEventListener('unload', function () {
+    if (countdownInterval) {
+      clearInterval(countdownInterval);
+    }
+  });
 });
