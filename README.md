@@ -1,5 +1,11 @@
 # Promemoria Timbrature
 
+![CI](https://github.com/AndreaBonn/PRIVATE__EstensioneChrome_DipendentiInCloud/actions/workflows/ci.yml/badge.svg)
+![Chrome MV3](https://img.shields.io/badge/Chrome-Manifest_V3-4285F4?logo=googlechrome&logoColor=white)
+![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)
+![Version](https://img.shields.io/badge/version-2.0.0-blue)
+![Zero Dependencies](https://img.shields.io/badge/runtime_deps-0-brightgreen)
+
 Estensione Chrome **NON UFFICIALE** per aiutarti a ricordare di timbrare su dipendentincloud.it.
 
 ## ⚠️ Disclaimer

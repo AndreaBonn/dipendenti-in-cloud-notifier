@@ -6,19 +6,34 @@ Chrome Manifest V3 extension that monitors clock-in/out status on dipendentinclo
 
 ## Architecture
 
-- **background.js** — Service worker: icon management, notifications, sound scheduling, periodic status checks
-- **content.js** — Content script injected on dipendentincloud.it: DOM scraping for clock status, button detection
-- **popup.js/popup.html/popup.css** — Extension popup: status display, countdown timer, punch history
-- **options.js/options.html/options.css** — Options page: work schedule, exclusions, sound preferences
-- **offscreen.js/offscreen.html** — Offscreen document for Web Audio API sound playback
-- **src/time-utils.js** — Pure functions extracted for testability (schedule logic, badge text, blink rules)
+```
+src/
+  background/           — Service worker modules (ES modules)
+    index.js            — Entry point: event listeners, orchestration
+    icon-manager.js     — Icon state, badge text, blinking
+    sound-manager.js    — Offscreen document, sound scheduling
+    notification-manager.js — Desktop notifications, time-slot alerts
+    schedule-manager.js — Work schedule loading, exclusion checks
+    storage-helpers.js  — Safe chrome.storage wrappers
+  content/
+    content.js          — Content script: DOM scraping, clock status detection
+  pages/
+    popup/              — Extension popup: status display, countdown, history
+    options/            — Options page: schedule, exclusions, sound prefs
+    offscreen/          — Offscreen document for Web Audio API playback
+  shared/
+    constants.js        — Shared constants (timing, sound types, origins)
+    logging.js          — Debug-gated logging utilities
+  time-utils.js         — Pure functions for schedule logic (testable)
+```
 
 ## Key Patterns
 
-- No bundler — plain JS loaded directly by Chrome. `src/time-utils.js` uses ES modules for tests only.
-- State stored in `chrome.storage.local` — no external services, no backend
-- Callback-based Chrome API wrappers (not async/await) for broadest compatibility
-- `DEBUG` flag in background.js and content.js controls console output
+- No bundler — plain JS with ES modules. Service worker and extension pages use `type="module"`.
+- Content script (`src/content/content.js`) cannot use ES modules (MV3 limitation) — self-contained.
+- State stored in `chrome.storage.local` — no external services, no backend.
+- Callback-based Chrome API wrappers (not async/await) for broadest compatibility.
+- `DEBUG` flag in `src/shared/logging.js` and `src/content/content.js` controls console output.
 
 ## Development
 
@@ -26,7 +41,7 @@ Chrome Manifest V3 extension that monitors clock-in/out status on dipendentinclo
 npm install          # Install dev dependencies (ESLint, Prettier, Vitest)
 npm run lint         # Run ESLint
 npm run format:check # Check Prettier formatting
-npm test             # Run unit tests (28 tests, Vitest)
+npm test             # Run unit tests (78 tests, Vitest)
 ```
 
 ## Loading the Extension
@@ -38,4 +53,10 @@ npm test             # Run unit tests (28 tests, Vitest)
 
 ## Testing
 
-Unit tests cover `src/time-utils.js` pure functions: time conversion, blink logic, badge text, notification windows. Run with `npm test`.
+Unit tests cover `src/time-utils.js` pure functions: time conversion, blink logic, badge text, notification windows, exclusion checks, countdown targets. Run with `npm test`.
+
+# currentDate
+
+Today's date is 2026-04-13.
+
+      IMPORTANT: this context may or may not be relevant to your tasks. You should not respond to this context unless it is highly relevant to your task.

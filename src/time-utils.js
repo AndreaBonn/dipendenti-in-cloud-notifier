@@ -6,7 +6,13 @@
 
 /** Convert "HH:MM" string to total minutes since midnight. */
 export function timeToMinutes(timeStr) {
+  if (!timeStr || typeof timeStr !== 'string' || !timeStr.includes(':')) {
+    return 0;
+  }
   const [hours, minutes] = timeStr.split(':').map(Number);
+  if (isNaN(hours) || isNaN(minutes)) {
+    return 0;
+  }
   return hours * 60 + minutes;
 }
 
@@ -170,4 +176,56 @@ export function getNotificationsToSend(currentMinutes, isTimbrato, schedule, win
   }
 
   return notifications;
+}
+
+/**
+ * Determine the next countdown target based on clock state and current time.
+ *
+ * @param {number} currentMinutes - minutes since midnight
+ * @param {boolean|null} isTimbrato - clock-in state
+ * @param {object} schedule - { morningStart, lunchEnd, afternoonStart, eveningEnd } in minutes
+ * @returns {{ label: string, targetMinutes: number, isUrgent: boolean } | null}
+ *   null when no countdown is applicable (outside work hours or null state)
+ */
+export function getCountdownTarget(currentMinutes, isTimbrato, schedule) {
+  const { morningStart, lunchEnd, afternoonStart, eveningEnd } = schedule;
+
+  if (isTimbrato === false) {
+    if (currentMinutes < morningStart) {
+      return { label: 'Entrata Mattina', targetMinutes: morningStart, isUrgent: false };
+    }
+    if (currentMinutes < lunchEnd) {
+      return { label: 'Entrata Mattina (scadenza)', targetMinutes: lunchEnd, isUrgent: true };
+    }
+    if (currentMinutes < afternoonStart) {
+      return { label: 'Entrata Pomeriggio', targetMinutes: afternoonStart, isUrgent: false };
+    }
+    if (currentMinutes < eveningEnd) {
+      return {
+        label: 'Entrata Pomeriggio (scadenza)',
+        targetMinutes: eveningEnd,
+        isUrgent: true,
+      };
+    }
+    return null; // past evening — outside work hours
+  }
+
+  if (isTimbrato === true) {
+    if (currentMinutes < lunchEnd) {
+      return { label: 'Uscita Pranzo', targetMinutes: lunchEnd, isUrgent: false };
+    }
+    if (currentMinutes < afternoonStart) {
+      return {
+        label: 'Uscita Pranzo (scadenza)',
+        targetMinutes: afternoonStart,
+        isUrgent: true,
+      };
+    }
+    if (currentMinutes < eveningEnd) {
+      return { label: 'Uscita Serale', targetMinutes: eveningEnd, isUrgent: false };
+    }
+    return null; // past evening — overdue, handled separately by caller
+  }
+
+  return null; // null/unknown state
 }

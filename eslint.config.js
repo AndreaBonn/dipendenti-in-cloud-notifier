@@ -22,7 +22,7 @@ export default [
     },
   },
   {
-    files: ['background.js', 'popup.js', 'options.js', 'src/**/*.js'],
+    files: ['src/**/*.js', 'tests/**/*.js'],
     languageOptions: {
       sourceType: 'module',
     },

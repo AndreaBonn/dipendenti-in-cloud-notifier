@@ -2,6 +2,23 @@ const DEBUG = false;
 function log(...args) {
   if (DEBUG) console.log(...args); // eslint-disable-line no-console
 }
+// Always-visible error/warning logging (never suppressed by DEBUG flag)
+function logError(...args) {
+  console.error('[Timbratura]', ...args); // eslint-disable-line no-console
+}
+function logWarn(...args) {
+  console.warn('[Timbratura]', ...args); // eslint-disable-line no-console
+}
+
+// SYNC: must match ALLOWED_ORIGINS in src/shared/constants.js (content scripts cannot use ES modules)
+const ALLOWED_HOSTNAMES = ['secure.dipendentincloud.it', 'cloud.dipendentincloud.it'];
+
+// Throttle for clickTimbra to prevent accidental double clicks (5 second lock)
+const CLICK_TIMBRA_COOLDOWN_MS = 5000;
+let lastClickTimbraTime = 0;
+
+// Validate HH:MM format (0-23 hours, 0-59 minutes)
+const TIME_FORMAT_STRICT = /^(?:[01]?\d|2[0-3]):[0-5]\d$/;
 
 // Funzione per estrarre le timbrature di oggi
 function extractTimbratureOggi() {
@@ -21,7 +38,7 @@ function extractTimbratureOggi() {
       const timeMatches = text.match(/\d{1,2}:\d{2}/g);
       if (timeMatches) {
         timeMatches.forEach((time) => {
-          if (!timbratureOggi.includes(time)) {
+          if (TIME_FORMAT_STRICT.test(time) && !timbratureOggi.includes(time)) {
             timbratureOggi.push(time);
           }
         });
@@ -165,10 +182,7 @@ function checkTimbratura() {
   let timbratureOggi = [];
 
   // Verifichiamo se siamo nella pagina di Dipendenti in Cloud
-  if (
-    document.location.href.includes('secure.dipendentincloud.it') ||
-    document.location.href.includes('cloud.dipendentincloud.it')
-  ) {
+  if (ALLOWED_HOSTNAMES.includes(document.location.hostname)) {
     log('[Timbratura] Inizio controllo stato...');
 
     // Estrai le timbrature di oggi
@@ -258,47 +272,67 @@ function checkTimbratura() {
             (isTimbrato ? 'TIMBRATO' : 'NON TIMBRATO')
         );
       } else {
-        log('[Timbratura] Stato: SCONOSCIUTO (nessun indicatore trovato)');
+        logWarn(
+          'Stato: SCONOSCIUTO — nessuna strategia di detection ha funzionato. URL:',
+          document.location.href
+        );
       }
     }
 
     // Salviamo lo stato nella storage locale solo se siamo nella pagina corretta
+    // Store only origin + pathname to avoid leaking query-string tokens
+    const sanitizedUrl = document.location.origin + document.location.pathname;
     const statusData = {
       isTimbrato: isTimbrato,
       lastTimbratura: lastTimbratura,
       timbratureCount: timbratureCount,
       timbratureOggi: timbratureOggi,
       lastChecked: new Date().toISOString(),
-      url: document.location.href,
+      url: sanitizedUrl,
     };
 
     chrome.storage.local.set({ timbratureStatus: statusData }, function () {
+      if (chrome.runtime.lastError) {
+        logError('Impossibile salvare stato timbratura:', chrome.runtime.lastError.message);
+        return;
+      }
       log('[Timbratura] Stato salvato:', statusData);
     });
 
     // Aggiorniamo l'icona dell'estensione
-    try {
-      chrome.runtime.sendMessage({
-        action: 'updateIcon',
+    if (!isRuntimeValid()) {
+      logWarn('Estensione non disponibile, impossibile aggiornare icona');
+      return {
         isTimbrato: isTimbrato,
-      });
-    } catch (error) {
-      log('[Timbratura] Errore invio messaggio (estensione ricaricata?):', error);
+        lastTimbratura: lastTimbratura,
+        timbratureOggi: timbratureOggi,
+      };
     }
+    chrome.runtime.sendMessage({ action: 'updateIcon', isTimbrato: isTimbrato }, function () {
+      if (chrome.runtime.lastError) {
+        logWarn('sendMessage updateIcon fallito:', chrome.runtime.lastError.message);
+      }
+    });
   } else {
     // Se non siamo nella pagina corretta, recuperiamo lo stato dalla storage
     chrome.storage.local.get('timbratureStatus', function (data) {
+      if (chrome.runtime.lastError) {
+        logError('storage.get timbratureStatus fallito:', chrome.runtime.lastError.message);
+        return;
+      }
       if (data && data.timbratureStatus) {
         log('Stato timbratura recuperato dalla storage:', data.timbratureStatus);
 
         // Aggiorniamo l'icona dell'estensione con lo stato memorizzato
-        try {
-          chrome.runtime.sendMessage({
-            action: 'updateIcon',
-            isTimbrato: data.timbratureStatus.isTimbrato,
-          });
-        } catch (error) {
-          log('[Timbratura] Errore invio messaggio (estensione ricaricata?):', error);
+        if (isRuntimeValid()) {
+          chrome.runtime.sendMessage(
+            { action: 'updateIcon', isTimbrato: data.timbratureStatus.isTimbrato },
+            function () {
+              if (chrome.runtime.lastError) {
+                logWarn('sendMessage updateIcon fallito:', chrome.runtime.lastError.message);
+              }
+            }
+          );
         }
       }
     });
@@ -314,21 +348,28 @@ function checkTimbratura() {
 // Funzione per verificare se il runtime è ancora valido
 function isRuntimeValid() {
   try {
-    return chrome.runtime && chrome.runtime.id;
-  } catch (_error) {
+    return !!(chrome.runtime && chrome.runtime.id);
+  } catch (error) {
+    logWarn('chrome.runtime non accessibile:', error.message);
     return false;
   }
 }
 
+const DEBOUNCE_DELAY = 500; // ms — evita check multipli su micro-mutazioni DOM della SPA
+const MIN_CHECK_INTERVAL_MS = 10000; // ms — cooldown assoluto tra check consecutivi
+
 // Funzione per osservare cambiamenti nella pagina
 function setupObserver() {
   let debounceTimer = null;
-  const DEBOUNCE_DELAY = 500; // ms — evita check multipli su micro-mutazioni DOM della SPA
+  let lastCheckTime = 0;
 
   const observer = new MutationObserver(function (_mutations) {
     if (isRuntimeValid()) {
       clearTimeout(debounceTimer);
       debounceTimer = setTimeout(function () {
+        const now = Date.now();
+        if (now - lastCheckTime < MIN_CHECK_INTERVAL_MS) return;
+        lastCheckTime = now;
         checkTimbratura();
       }, DEBOUNCE_DELAY);
     } else {
@@ -377,13 +418,11 @@ function simulateRealClick(element) {
     buttons: 1,
   });
 
-  // Simula la sequenza completa di eventi
+  // Simula la sequenza completa di eventi (mousedown → mouseup → click)
+  // Non usare element.click() aggiuntivo: causerebbe un doppio evento click
   element.dispatchEvent(mousedownEvent);
   element.dispatchEvent(mouseupEvent);
   element.dispatchEvent(clickEvent);
-
-  // Prova anche il metodo click() nativo
-  element.click();
 }
 
 // Funzione per cliccare sul bottone di timbratura
@@ -507,11 +546,21 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
 
   if (request.action === 'getStatus') {
     // Se siamo nella pagina di Dipendenti in Cloud, controlliamo lo stato in tempo reale
-    if (document.location.href.includes('secure.dipendentincloud.it')) {
+    if (ALLOWED_HOSTNAMES.includes(document.location.hostname)) {
       sendResponse(checkTimbratura());
     } else {
       // Altrimenti recuperiamo lo stato dalla storage
       chrome.storage.local.get('timbratureStatus', function (data) {
+        if (chrome.runtime.lastError) {
+          logError('storage.get timbratureStatus fallito:', chrome.runtime.lastError.message);
+          sendResponse({
+            isTimbrato: null,
+            lastTimbratura: '',
+            timbratureOggi: [],
+            fromStorage: false,
+          });
+          return;
+        }
         if (data && data.timbratureStatus) {
           sendResponse({
             isTimbrato: data.timbratureStatus.isTimbrato,
@@ -532,7 +581,17 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
       return true; // Importante per le risposte asincrone
     }
   } else if (request.action === 'clickTimbra') {
-    // Clicca sul bottone di timbratura
+    // Throttle: prevent double-click within 5 seconds
+    const now = Date.now();
+    if (now - lastClickTimbraTime < CLICK_TIMBRA_COOLDOWN_MS) {
+      sendResponse({
+        success: false,
+        message: 'Operazione troppo frequente. Riprova tra qualche secondo.',
+      });
+      return true;
+    }
+    lastClickTimbraTime = now;
+
     const result = clickTimbraButton();
     sendResponse(result);
   } else if (request.action === 'extractAssenze') {

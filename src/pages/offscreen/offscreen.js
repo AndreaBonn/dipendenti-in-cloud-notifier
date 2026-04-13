@@ -132,30 +132,48 @@ function playSound(soundType = 'classic', volume = 0.5) {
     audioContext = new AudioContext();
   }
 
-  // Riprendi il contesto se è sospeso (policy browser)
-  if (audioContext.state === 'suspended') {
-    audioContext.resume();
-  }
-
   const sound = SOUNDS[soundType] || SOUNDS.classic;
-  sound.play(audioContext, volume);
+
+  // Attendi resume prima di riprodurre se il contesto è sospeso (policy browser)
+  if (audioContext.state === 'suspended') {
+    audioContext
+      .resume()
+      .then(function () {
+        try {
+          sound.play(audioContext, volume);
+        } catch (err) {
+          console.error('[Audio] Riproduzione fallita dopo resume:', err.message); // eslint-disable-line no-console
+        }
+      })
+      .catch(function (err) {
+        console.error('[Audio] resume audioContext fallito:', err.message); // eslint-disable-line no-console
+      });
+  } else {
+    try {
+      sound.play(audioContext, volume);
+    } catch (err) {
+      console.error('[Audio] Riproduzione fallita:', err.message); // eslint-disable-line no-console
+    }
+  }
 }
+
+// Valid sound types whitelist (local copy for defense-in-depth).
+// Must stay in sync with VALID_SOUND_TYPES in shared/constants.js.
+// Offscreen documents cannot use ES module imports (MV3 limitation).
+const VALID_SOUND_TYPES = Object.keys(SOUNDS);
 
 // Ascoltiamo i messaggi dal background script
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   // Accetta solo messaggi dall'estensione stessa
   if (sender.id !== chrome.runtime.id) return;
 
-  if (request.action === 'playSound') {
-    const soundType = request.soundType || 'classic';
-    const volume = request.volume !== undefined ? request.volume : 0.5;
+  // Ignore messages not targeted at the offscreen document
+  if (request.target && request.target !== 'offscreen') return;
 
-    playSound(soundType, volume);
-    sendResponse({ success: true });
-  } else if (request.action === 'testSound') {
-    // Per testare i suoni dalle opzioni
-    const soundType = request.soundType || 'classic';
-    const volume = request.volume !== undefined ? request.volume : 0.5;
+  if (request.action === 'playSound' || request.action === 'testSound') {
+    const soundType = VALID_SOUND_TYPES.includes(request.soundType) ? request.soundType : 'classic';
+    const volume =
+      request.volume !== undefined ? Math.max(0, Math.min(1, Number(request.volume) || 0.5)) : 0.5;
 
     playSound(soundType, volume);
     sendResponse({ success: true });
