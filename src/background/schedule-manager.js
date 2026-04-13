@@ -4,6 +4,8 @@
 
 import { timeToMinutes, checkExclusion, getSituationId } from '../time-utils.js';
 import { DEFAULT_SCHEDULE_STRINGS } from '../shared/constants.js';
+import { logError } from '../shared/logging.js';
+import { isValidTimeString, filterValidExclusions } from '../shared/validation.js';
 import { storageGet } from './storage-helpers.js';
 
 const workSchedule = {
@@ -28,10 +30,15 @@ export function loadWorkSchedule(callback) {
       eveningEnd: DEFAULT_SCHEDULE_STRINGS.eveningEnd,
     },
     function (items) {
-      workSchedule.morningStart = timeToMinutes(items.morningStart);
-      workSchedule.lunchEnd = timeToMinutes(items.lunchEnd);
-      workSchedule.afternoonStart = timeToMinutes(items.afternoonStart);
-      workSchedule.eveningEnd = timeToMinutes(items.eveningEnd);
+      const fields = ['morningStart', 'lunchEnd', 'afternoonStart', 'eveningEnd'];
+      for (const field of fields) {
+        if (isValidTimeString(items[field])) {
+          workSchedule[field] = timeToMinutes(items[field]);
+        } else {
+          logError('loadWorkSchedule: valore invalido per', field, items[field]);
+          workSchedule[field] = timeToMinutes(DEFAULT_SCHEDULE_STRINGS[field]);
+        }
+      }
       if (callback) callback();
     }
   );
@@ -58,13 +65,16 @@ export function isExcludedDay(callback) {
     },
     function (options) {
       const now = new Date();
+      const safeFullDay = filterValidExclusions(options.fullDayExclusions);
+      const safeHalfDay = filterValidExclusions(options.halfDayExclusions);
+
       const result = checkExclusion({
         dayOfWeek: now.getDay(),
         dateStr: now.toISOString().split('T')[0],
         currentMinutes: now.getHours() * 60 + now.getMinutes(),
         excludeWeekends: options.excludeWeekends,
-        fullDayExclusions: options.fullDayExclusions,
-        halfDayExclusions: options.halfDayExclusions,
+        fullDayExclusions: safeFullDay,
+        halfDayExclusions: safeHalfDay,
         checkTime: true,
       });
       callback(result);
@@ -72,13 +82,18 @@ export function isExcludedDay(callback) {
   );
 }
 
-/** Check if current time is within working hours (8:00-19:00) and not excluded. */
+/**
+ * Check if current time is within the broad working window (8:00-19:00) and not excluded.
+ * Note: this uses a fixed 8-19 window intentionally wider than the user's custom schedule,
+ * to cover early arrivals and late departures. The user's schedule controls blink/notification
+ * timing via shouldBlink(), while this function only gates auto-open and startup checks.
+ */
 export function isWorkingHours(callback) {
   const now = new Date();
   const currentTime = now.getHours() * 60 + now.getMinutes();
 
-  const startWork = 8 * 60; // 08:00
-  const endWork = 19 * 60; // 19:00
+  const startWork = 8 * 60; // 08:00 — intentionally wider than user schedule
+  const endWork = 19 * 60; // 19:00 — intentionally wider than user schedule
 
   if (currentTime < startWork || currentTime > endWork) {
     callback(false);

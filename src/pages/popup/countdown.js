@@ -3,7 +3,7 @@
  * Manages the real-time countdown display based on clock state and work schedule.
  */
 
-import { checkExclusion, getCountdownTarget } from '../../time-utils.js';
+import { checkExclusion, getCountdownTarget, computeCountdownState } from '../../time-utils.js';
 import { parseTimeToHoursMinutes } from '../../shared/validation.js';
 import { DEFAULT_SCHEDULE_STRINGS } from '../../shared/constants.js';
 
@@ -84,6 +84,13 @@ export function updateCountdown(isTimbrato, countdownElement) {
         eveningEnd: DEFAULT_SCHEDULE_STRINGS.eveningEnd,
       },
       function (scheduleData) {
+        if (chrome.runtime.lastError) {
+          // eslint-disable-next-line no-console
+          console.warn(
+            '[Countdown] Caricamento schedule fallito, uso default:',
+            chrome.runtime.lastError.message
+          );
+        }
         const mStart = parseTimeToHoursMinutes(scheduleData.morningStart);
         const lEnd = parseTimeToHoursMinutes(scheduleData.lunchEnd);
         const aStart = parseTimeToHoursMinutes(scheduleData.afternoonStart);
@@ -108,54 +115,18 @@ export function updateCountdown(isTimbrato, countdownElement) {
 function tickCountdown(isTimbrato, schedule, countdownElement) {
   const now = new Date();
   const currentMinutes = now.getHours() * 60 + now.getMinutes();
-
   const target = getCountdownTarget(currentMinutes, isTimbrato, schedule);
 
-  if (!target && isTimbrato === false) {
-    countdownElement.textContent = 'Fuori Orario Lavorativo';
-    countdownElement.className = 'countdown';
-    return;
-  }
-  if (!target && isTimbrato === true) {
-    countdownElement.textContent = 'Uscita Serale — SCADUTO!';
-    countdownElement.className = 'countdown urgent';
-    return;
-  }
-  if (!target) {
-    countdownElement.textContent = '';
-    return;
+  let diffMs = 0;
+  if (target) {
+    const targetTime = new Date(now);
+    const targetH = Math.floor(target.targetMinutes / 60);
+    const targetM = target.targetMinutes % 60;
+    targetTime.setHours(targetH, targetM, 0, 0);
+    diffMs = targetTime - now;
   }
 
-  const targetTime = new Date(now);
-  const targetH = Math.floor(target.targetMinutes / 60);
-  const targetM = target.targetMinutes % 60;
-  targetTime.setHours(targetH, targetM, 0, 0);
-
-  const diff = targetTime - now;
-
-  if (diff <= 0) {
-    countdownElement.textContent = target.label + ' - SCADUTO!';
-    countdownElement.className = 'countdown urgent';
-  } else {
-    const hoursLeft = Math.floor(diff / (1000 * 60 * 60));
-    const minutesLeft = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-    const secondsLeft = Math.floor((diff % (1000 * 60)) / 1000);
-
-    let timeString;
-    if (hoursLeft > 0) {
-      timeString = `${hoursLeft}h ${minutesLeft}m ${secondsLeft}s`;
-    } else {
-      timeString = `${minutesLeft}m ${secondsLeft}s`;
-    }
-
-    countdownElement.textContent = `${target.label}: ${timeString}`;
-
-    if (target.isUrgent || minutesLeft < 5) {
-      countdownElement.className = 'countdown urgent';
-    } else if (minutesLeft < 15) {
-      countdownElement.className = 'countdown warning';
-    } else {
-      countdownElement.className = 'countdown';
-    }
-  }
+  const state = computeCountdownState(target, isTimbrato, diffMs);
+  countdownElement.textContent = state.text;
+  countdownElement.className = state.className;
 }

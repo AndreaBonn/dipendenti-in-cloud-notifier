@@ -5,8 +5,8 @@
 
 import { shouldBlink } from '../time-utils.js';
 import { log } from '../shared/logging.js';
-import { VALID_SOUND_TYPES, STARTUP_DELAY_MS } from '../shared/constants.js';
-import { isAllowedOrigin } from '../shared/validation.js';
+import { STARTUP_DELAY_MS } from '../shared/constants.js';
+import { isAllowedOrigin, normalizeVolume, normalizeSoundType } from '../shared/validation.js';
 import { storageSet, storageGet, storageRemove } from './storage-helpers.js';
 import {
   setIcon,
@@ -80,9 +80,12 @@ function openDipendentiInCloud() {
 function syncStateOnWakeUp(callback) {
   storageGet(['isBlinking'], function (data) {
     if (data.isBlinking && !isCurrentlyBlinking()) {
-      storageSet({ isBlinking: false });
+      storageSet({ isBlinking: false }, function () {
+        if (callback) callback();
+      });
+    } else {
+      if (callback) callback();
     }
-    if (callback) callback();
   });
 }
 
@@ -200,15 +203,20 @@ chrome.notifications.onClicked.addListener(function (notificationId) {
 });
 
 // Message handler from content script and options page
+const VALID_ACTIONS = ['testSound', 'updateIcon', 'muteNotification'];
+
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
   if (sender.id !== chrome.runtime.id) return;
 
   // Defense-in-depth: validate origin for content script messages
   if (sender.tab && (!sender.tab.url || !isAllowedOrigin(sender.tab.url))) return;
 
+  // Validate request structure
+  if (!request || typeof request !== 'object' || !VALID_ACTIONS.includes(request.action)) return;
+
   if (request.action === 'testSound') {
-    const soundType = VALID_SOUND_TYPES.includes(request.soundType) ? request.soundType : 'classic';
-    const volume = Math.max(0, Math.min(1, Number(request.volume) || 0.5));
+    const soundType = normalizeSoundType(request.soundType);
+    const volume = normalizeVolume(request.volume);
 
     sendToOffscreen({
       action: 'testSound',

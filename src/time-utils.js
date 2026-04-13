@@ -229,3 +229,52 @@ export function getCountdownTarget(currentMinutes, isTimbrato, schedule) {
 
   return null; // null/unknown state
 }
+
+/**
+ * Compute the countdown display state (text + CSS class) for the popup timer.
+ * Pure function extracted from tickCountdown for testability.
+ *
+ * @param {object|null} target - from getCountdownTarget, or null
+ * @param {boolean|null} isTimbrato
+ * @param {number} diffMs - milliseconds until target (can be negative if past)
+ * @returns {{ text: string, className: string }}
+ */
+export function computeCountdownState(target, isTimbrato, diffMs) {
+  if (!target && isTimbrato === false) {
+    return { text: 'Fuori Orario Lavorativo', className: 'countdown' };
+  }
+  if (!target && isTimbrato === true) {
+    return { text: 'Uscita Serale — SCADUTO!', className: 'countdown urgent' };
+  }
+  if (!target) {
+    return { text: '', className: 'countdown' };
+  }
+
+  if (diffMs <= 0) {
+    return { text: target.label + ' - SCADUTO!', className: 'countdown urgent' };
+  }
+
+  const hoursLeft = Math.floor(diffMs / (1000 * 60 * 60));
+  const minutesLeft = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+  const secondsLeft = Math.floor((diffMs % (1000 * 60)) / 1000);
+
+  let timeString;
+  if (hoursLeft > 0) {
+    timeString = `${hoursLeft}h ${minutesLeft}m ${secondsLeft}s`;
+  } else {
+    timeString = `${minutesLeft}m ${secondsLeft}s`;
+  }
+
+  const text = `${target.label}: ${timeString}`;
+  let className;
+
+  if (target.isUrgent || minutesLeft < 5) {
+    className = 'countdown urgent';
+  } else if (minutesLeft < 15) {
+    className = 'countdown warning';
+  } else {
+    className = 'countdown';
+  }
+
+  return { text, className };
+}

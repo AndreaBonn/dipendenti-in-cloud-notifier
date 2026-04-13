@@ -3,7 +3,7 @@
  * Pure functions — no chrome.* or DOM dependencies.
  */
 
-import { ALLOWED_ORIGINS } from './constants.js';
+import { ALLOWED_ORIGINS, VALID_SOUND_TYPES } from './constants.js';
 
 /** Validate URL origin against allowlist using URL parser (prevents subdomain bypass). */
 export function isAllowedOrigin(url) {
@@ -49,6 +49,50 @@ export function parseTimeToHoursMinutes(timeStr) {
     return { h: 0, m: 0 };
   }
   return { h, m };
+}
+
+/**
+ * Normalize a volume value to the 0-1 range.
+ * Handles the falsy trap: volume=0 is valid silence, not a missing value.
+ *
+ * @param {*} rawValue - volume as 0-100 percentage, 0-1 ratio, or invalid
+ * @param {boolean} [isPercentage=false] - if true, divides by 100 first
+ * @returns {number} clamped 0-1
+ */
+export function normalizeVolume(rawValue, isPercentage = false) {
+  const num = isPercentage ? Number(rawValue) / 100 : Number(rawValue);
+  return Math.max(0, Math.min(1, Number.isFinite(num) ? num : 0.5));
+}
+
+/**
+ * Validate and normalize a sound type against the whitelist.
+ *
+ * @param {*} soundType
+ * @returns {string} valid sound type or 'classic' as fallback
+ */
+export function normalizeSoundType(soundType) {
+  return VALID_SOUND_TYPES.includes(soundType) ? soundType : 'classic';
+}
+
+/**
+ * Validate a schedule time string matches HH:MM format.
+ *
+ * @param {*} value
+ * @returns {boolean}
+ */
+export function isValidTimeString(value) {
+  return typeof value === 'string' && /^\d{1,2}:\d{2}$/.test(value);
+}
+
+/**
+ * Filter an array of exclusions, keeping only structurally valid entries.
+ *
+ * @param {*} exclusions - raw value from storage
+ * @returns {Array<{date: string}>} only entries with a valid date string
+ */
+export function filterValidExclusions(exclusions) {
+  if (!Array.isArray(exclusions)) return [];
+  return exclusions.filter((e) => e && typeof e.date === 'string');
 }
 
 /**

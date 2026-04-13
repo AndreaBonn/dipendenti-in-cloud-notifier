@@ -22,12 +22,23 @@ document.addEventListener('DOMContentLoaded', function () {
   const openSiteButton = document.getElementById('open-site');
 
   openSiteButton.addEventListener('click', function () {
-    chrome.tabs.create({ url: 'https://secure.dipendentincloud.it/it/app/dashboard' });
+    chrome.tabs.create({ url: 'https://secure.dipendentincloud.it/it/app/dashboard' }, function () {
+      if (chrome.runtime.lastError) {
+        errorElement.textContent =
+          'Impossibile aprire la pagina: ' + chrome.runtime.lastError.message;
+        errorElement.style.display = 'block';
+      }
+    });
   });
 
   const openOptionsButton = document.getElementById('open-options');
   openOptionsButton.addEventListener('click', function () {
-    chrome.runtime.openOptionsPage();
+    chrome.runtime.openOptionsPage(function () {
+      if (chrome.runtime.lastError) {
+        errorElement.textContent = 'Impossibile aprire le impostazioni';
+        errorElement.style.display = 'block';
+      }
+    });
   });
 
   const muteButton = document.getElementById('mute-notification');
