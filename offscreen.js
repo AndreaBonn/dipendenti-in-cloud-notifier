@@ -146,6 +146,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   // Accetta solo messaggi dall'estensione stessa
   if (sender.id !== chrome.runtime.id) return;
 
+  // Ignore messages not targeted at the offscreen document
+  if (request.target && request.target !== 'offscreen') return;
+
   if (request.action === 'playSound') {
     const soundType = request.soundType || 'classic';
     const volume = request.volume !== undefined ? request.volume : 0.5;

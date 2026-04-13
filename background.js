@@ -30,7 +30,8 @@ let isBlinking = false;
 
 let soundInterval = null;
 
-// Variabili per gestire le notifiche
+// Variabili per gestire le notifiche — persisted in chrome.storage.local
+// to survive MV3 service worker restarts.
 let notificationsSent = {};
 const workSchedule = {
   morningStart: 9 * 60,
@@ -267,26 +268,38 @@ const NOTIFICATION_MESSAGES = {
 };
 
 // Funzione per controllare e inviare notifiche (uses imported getNotificationsToSend)
+// Persists notificationsSent to chrome.storage.local to survive SW restarts.
 function checkAndSendNotifications(currentTime, isTimbrato) {
-  const today = new Date().toDateString();
+  chrome.storage.local.get({ notificationsSent: {} }, function (data) {
+    const today = new Date().toDateString();
+    let stored = data.notificationsSent;
 
-  // Reset notifiche se è un nuovo giorno
-  if (!notificationsSent.date || notificationsSent.date !== today) {
-    notificationsSent = { date: today };
-  }
+    // Reset notifiche se è un nuovo giorno
+    if (!stored.date || stored.date !== today) {
+      stored = { date: today };
+    }
 
-  const toSend = getNotificationsToSend(
-    currentTime,
-    isTimbrato,
-    workSchedule,
-    NOTIFICATION_WINDOW_MINUTES
-  );
+    const toSend = getNotificationsToSend(
+      currentTime,
+      isTimbrato,
+      workSchedule,
+      NOTIFICATION_WINDOW_MINUTES
+    );
 
-  toSend.forEach(function (key) {
-    if (!notificationsSent[key]) {
-      const msg = NOTIFICATION_MESSAGES[key];
-      sendNotification(msg.title, msg.message, true);
-      notificationsSent[key] = true;
+    let changed = false;
+    toSend.forEach(function (key) {
+      if (!stored[key]) {
+        const msg = NOTIFICATION_MESSAGES[key];
+        sendNotification(msg.title, msg.message, true);
+        stored[key] = true;
+        changed = true;
+      }
+    });
+
+    // Aggiorna in-memory e persisti solo se cambiato
+    notificationsSent = stored;
+    if (changed) {
+      chrome.storage.local.set({ notificationsSent: stored });
     }
   });
 }
@@ -308,7 +321,8 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
   if (sender.id !== chrome.runtime.id) return;
 
   // Defense-in-depth: validate origin for content script messages
-  if (sender.tab && !ALLOWED_ORIGINS.some((o) => sender.tab.url.startsWith(o))) return;
+  if (sender.tab && (!sender.tab.url || !ALLOWED_ORIGINS.some((o) => sender.tab.url.startsWith(o))))
+    return;
 
   if (request.action === 'testSound') {
     // Test del suono dalle opzioni — validate against whitelist
@@ -412,7 +426,7 @@ setInterval(() => {
     ['timbratureStatus', 'mutedSituation', 'lastSituationId'],
     function (data) {
       if (data && data.timbratureStatus && data.timbratureStatus.isTimbrato !== null) {
-        const isTimbrato = data.timbratureStatus.isTimbrato;
+        const isTimbrato = Boolean(data.timbratureStatus.isTimbrato);
         const baseState = isTimbrato ? 'green' : 'red';
 
         checkShouldBlink(isTimbrato, function (shouldBlink) {
@@ -479,7 +493,8 @@ setInterval(() => {
   });
 }, BADGE_UPDATE_MS);
 
-// Funzione per verificare se oggi è escluso
+// Wrapper: reads exclusion settings from storage and delegates to checkExclusion().
+// A similar wrapper exists in popup.js (checkExcludedDay) with checkTime=false.
 function isExcludedDay(callback) {
   chrome.storage.local.get(
     {
@@ -547,10 +562,14 @@ function openDipendentiInCloud() {
 // MV3 service workers are killed after ~30s of inactivity; on restart,
 // module-level variables reset to defaults while storage retains stale values.
 function syncStateOnWakeUp(callback) {
-  chrome.storage.local.get(['isBlinking'], function (data) {
+  chrome.storage.local.get(['isBlinking', 'notificationsSent'], function (data) {
     if (data.isBlinking && !isBlinking) {
       // Storage says blinking but worker just woke up — reset stale flag
       chrome.storage.local.set({ isBlinking: false });
+    }
+    // Restore persisted notificationsSent to in-memory variable
+    if (data.notificationsSent) {
+      notificationsSent = data.notificationsSent;
     }
     if (callback) callback();
   });
@@ -576,7 +595,7 @@ function checkStatusOnStartup() {
   // Controlliamo lo stato salvato E forziamo un controllo immediato
   chrome.storage.local.get('timbratureStatus', function (data) {
     if (data && data.timbratureStatus && data.timbratureStatus.isTimbrato !== null) {
-      const isTimbrato = data.timbratureStatus.isTimbrato;
+      const isTimbrato = Boolean(data.timbratureStatus.isTimbrato);
       const baseState = isTimbrato ? 'green' : 'red';
 
       checkShouldBlink(isTimbrato, function (shouldBlink) {

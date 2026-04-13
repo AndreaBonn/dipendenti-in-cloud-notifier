@@ -263,13 +263,15 @@ function checkTimbratura() {
     }
 
     // Salviamo lo stato nella storage locale solo se siamo nella pagina corretta
+    // Store only origin + pathname to avoid leaking query-string tokens
+    const sanitizedUrl = document.location.origin + document.location.pathname;
     const statusData = {
       isTimbrato: isTimbrato,
       lastTimbratura: lastTimbratura,
       timbratureCount: timbratureCount,
       timbratureOggi: timbratureOggi,
       lastChecked: new Date().toISOString(),
-      url: document.location.href,
+      url: sanitizedUrl,
     };
 
     chrome.storage.local.set({ timbratureStatus: statusData }, function () {
@@ -377,13 +379,11 @@ function simulateRealClick(element) {
     buttons: 1,
   });
 
-  // Simula la sequenza completa di eventi
+  // Simula la sequenza completa di eventi (mousedown → mouseup → click)
+  // Non usare element.click() aggiuntivo: causerebbe un doppio evento click
   element.dispatchEvent(mousedownEvent);
   element.dispatchEvent(mouseupEvent);
   element.dispatchEvent(clickEvent);
-
-  // Prova anche il metodo click() nativo
-  element.click();
 }
 
 // Funzione per cliccare sul bottone di timbratura

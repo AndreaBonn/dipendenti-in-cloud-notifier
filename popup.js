@@ -380,6 +380,16 @@ document.addEventListener('DOMContentLoaded', function () {
 
       const currentTab = tabs[0];
 
+      // Only send messages to tabs running on the expected domain
+      if (
+        !currentTab.url ||
+        (!currentTab.url.startsWith('https://secure.dipendentincloud.it') &&
+          !currentTab.url.startsWith('https://cloud.dipendentincloud.it'))
+      ) {
+        // Tab is not on dipendentincloud — skip message, rely on storage data
+        return;
+      }
+
       // Chiediamo lo stato al content script
       chrome.tabs.sendMessage(currentTab.id, { action: 'getStatus' }, function (response) {
         if (chrome.runtime.lastError || !response) {
