@@ -1,4 +1,4 @@
-import { checkExclusion } from './src/time-utils.js';
+import { checkExclusion, getCountdownTarget } from './src/time-utils.js';
 
 document.addEventListener('DOMContentLoaded', function () {
   const statusContainer = document.getElementById('status-container');
@@ -181,101 +181,66 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   function startCountdownWithSchedule(isTimbrato, mStart, lEnd, aStart, eEnd) {
+    const schedule = {
+      morningStart: mStart.h * 60 + mStart.m,
+      lunchEnd: lEnd.h * 60 + lEnd.m,
+      afternoonStart: aStart.h * 60 + aStart.m,
+      eveningEnd: eEnd.h * 60 + eEnd.m,
+    };
+
     countdownInterval = setInterval(() => {
       const now = new Date();
       const currentMinutes = now.getHours() * 60 + now.getMinutes();
 
-      const morningStartMin = mStart.h * 60 + mStart.m;
-      const lunchEndMin = lEnd.h * 60 + lEnd.m;
-      const afternoonStartMin = aStart.h * 60 + aStart.m;
-      const eveningEndMin = eEnd.h * 60 + eEnd.m;
+      const target = getCountdownTarget(currentMinutes, isTimbrato, schedule);
 
-      let targetTime;
-      let targetLabel;
-      let isUrgent;
-
-      // Determiniamo il prossimo evento in base allo stato e all'orario
-      if (isTimbrato === false) {
-        // Non timbrato - prossimo evento è l'entrata
-        if (currentMinutes < morningStartMin) {
-          targetTime = new Date(now);
-          targetTime.setHours(mStart.h, mStart.m, 0, 0);
-          targetLabel = 'Entrata Mattina';
-          isUrgent = false;
-        } else if (currentMinutes < lunchEndMin) {
-          targetTime = new Date(now);
-          targetTime.setHours(lEnd.h, lEnd.m, 0, 0);
-          targetLabel = 'Entrata Mattina (scadenza)';
-          isUrgent = currentMinutes >= morningStartMin;
-        } else if (currentMinutes < afternoonStartMin) {
-          targetTime = new Date(now);
-          targetTime.setHours(aStart.h, aStart.m, 0, 0);
-          targetLabel = 'Entrata Pomeriggio';
-          isUrgent = false;
-        } else if (currentMinutes < eveningEndMin) {
-          targetTime = new Date(now);
-          targetTime.setHours(eEnd.h, eEnd.m, 0, 0);
-          targetLabel = 'Entrata Pomeriggio (scadenza)';
-          isUrgent = currentMinutes >= afternoonStartMin;
-        } else {
-          countdownElement.textContent = 'Fuori Orario Lavorativo';
-          countdownElement.className = 'countdown';
-          return;
-        }
-      } else if (isTimbrato === true) {
-        // Timbrato - prossimo evento è l'uscita
-        if (currentMinutes < lunchEndMin) {
-          targetTime = new Date(now);
-          targetTime.setHours(lEnd.h, lEnd.m, 0, 0);
-          targetLabel = 'Uscita Pranzo';
-          isUrgent = false;
-        } else if (currentMinutes < afternoonStartMin) {
-          targetTime = new Date(now);
-          targetTime.setHours(aStart.h, aStart.m, 0, 0);
-          targetLabel = 'Uscita Pranzo (scadenza)';
-          isUrgent = currentMinutes >= lunchEndMin;
-        } else if (currentMinutes < eveningEndMin) {
-          targetTime = new Date(now);
-          targetTime.setHours(eEnd.h, eEnd.m, 0, 0);
-          targetLabel = 'Uscita Serale';
-          isUrgent = false;
-        } else {
-          countdownElement.textContent = 'Uscita Serale — SCADUTO!';
-          countdownElement.className = 'countdown urgent';
-          return;
-        }
-      } else {
+      // Handle special cases not covered by getCountdownTarget
+      if (!target && isTimbrato === false) {
+        countdownElement.textContent = 'Fuori Orario Lavorativo';
+        countdownElement.className = 'countdown';
+        return;
+      }
+      if (!target && isTimbrato === true) {
+        countdownElement.textContent = 'Uscita Serale — SCADUTO!';
+        countdownElement.className = 'countdown urgent';
+        return;
+      }
+      if (!target) {
         countdownElement.textContent = '';
         return;
       }
 
-      if (targetTime) {
-        const diff = targetTime - now;
+      // Convert target minutes to a Date for precise diff (including seconds)
+      const targetTime = new Date(now);
+      const targetH = Math.floor(target.targetMinutes / 60);
+      const targetM = target.targetMinutes % 60;
+      targetTime.setHours(targetH, targetM, 0, 0);
 
-        if (diff <= 0) {
-          countdownElement.textContent = targetLabel + ' - SCADUTO!';
-          countdownElement.className = 'countdown urgent';
+      const diff = targetTime - now;
+
+      if (diff <= 0) {
+        countdownElement.textContent = target.label + ' - SCADUTO!';
+        countdownElement.className = 'countdown urgent';
+      } else {
+        const hoursLeft = Math.floor(diff / (1000 * 60 * 60));
+        const minutesLeft = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const secondsLeft = Math.floor((diff % (1000 * 60)) / 1000);
+
+        let timeString;
+        if (hoursLeft > 0) {
+          timeString = `${hoursLeft}h ${minutesLeft}m ${secondsLeft}s`;
         } else {
-          const hoursLeft = Math.floor(diff / (1000 * 60 * 60));
-          const minutesLeft = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-          const secondsLeft = Math.floor((diff % (1000 * 60)) / 1000);
+          timeString = `${minutesLeft}m ${secondsLeft}s`;
+        }
 
-          let timeString;
-          if (hoursLeft > 0) {
-            timeString = `${hoursLeft}h ${minutesLeft}m ${secondsLeft}s`;
-          } else {
-            timeString = `${minutesLeft}m ${secondsLeft}s`;
-          }
+        countdownElement.textContent = `${target.label}: ${timeString}`;
 
-          countdownElement.textContent = `${targetLabel}: ${timeString}`;
-
-          if (isUrgent || minutesLeft < 5) {
-            countdownElement.className = 'countdown urgent';
-          } else if (minutesLeft < 15) {
-            countdownElement.className = 'countdown warning';
-          } else {
-            countdownElement.className = 'countdown';
-          }
+        if (target.isUrgent || minutesLeft < 5) {
+          countdownElement.className = 'countdown urgent';
+        } else if (minutesLeft < 15) {
+          countdownElement.className = 'countdown warning';
+        } else {
+          countdownElement.className = 'countdown';
         }
       }
     }, 1000);

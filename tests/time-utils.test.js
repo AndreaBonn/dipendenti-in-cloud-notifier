@@ -6,6 +6,7 @@ import {
   getBadgeText,
   getNotificationsToSend,
   checkExclusion,
+  getCountdownTarget,
 } from '../src/time-utils.js';
 
 const DEFAULT_SCHEDULE = {
@@ -369,5 +370,185 @@ describe('checkExclusion', () => {
       halfDayExclusions: [{ date: '2026-04-13', period: 'morning' }],
     });
     expect(result.reason).toBe('fullDay');
+  });
+});
+
+// === COUNTDOWN TARGET TESTS ===
+
+describe('getCountdownTarget', () => {
+  // Not clocked in scenarios
+  describe('when not clocked in (isTimbrato=false)', () => {
+    it('targets morning start before work hours', () => {
+      const result = getCountdownTarget(480, false, DEFAULT_SCHEDULE); // 08:00
+      expect(result).toEqual({
+        label: 'Entrata Mattina',
+        targetMinutes: 540,
+        isUrgent: false,
+      });
+    });
+
+    it('targets lunch end when past morning start (urgent)', () => {
+      const result = getCountdownTarget(600, false, DEFAULT_SCHEDULE); // 10:00
+      expect(result).toEqual({
+        label: 'Entrata Mattina (scadenza)',
+        targetMinutes: 780,
+        isUrgent: true,
+      });
+    });
+
+    it('targets afternoon start during lunch break', () => {
+      const result = getCountdownTarget(790, false, DEFAULT_SCHEDULE); // 13:10
+      expect(result).toEqual({
+        label: 'Entrata Pomeriggio',
+        targetMinutes: 840,
+        isUrgent: false,
+      });
+    });
+
+    it('targets evening end when past afternoon start (urgent)', () => {
+      const result = getCountdownTarget(900, false, DEFAULT_SCHEDULE); // 15:00
+      expect(result).toEqual({
+        label: 'Entrata Pomeriggio (scadenza)',
+        targetMinutes: 1080,
+        isUrgent: true,
+      });
+    });
+
+    it('returns null after evening end', () => {
+      expect(getCountdownTarget(1100, false, DEFAULT_SCHEDULE)).toBeNull();
+    });
+  });
+
+  // Clocked in scenarios
+  describe('when clocked in (isTimbrato=true)', () => {
+    it('targets lunch end during morning', () => {
+      const result = getCountdownTarget(600, true, DEFAULT_SCHEDULE); // 10:00
+      expect(result).toEqual({
+        label: 'Uscita Pranzo',
+        targetMinutes: 780,
+        isUrgent: false,
+      });
+    });
+
+    it('targets afternoon start during lunch (urgent)', () => {
+      const result = getCountdownTarget(800, true, DEFAULT_SCHEDULE); // 13:20
+      expect(result).toEqual({
+        label: 'Uscita Pranzo (scadenza)',
+        targetMinutes: 840,
+        isUrgent: true,
+      });
+    });
+
+    it('targets evening end during afternoon', () => {
+      const result = getCountdownTarget(900, true, DEFAULT_SCHEDULE); // 15:00
+      expect(result).toEqual({
+        label: 'Uscita Serale',
+        targetMinutes: 1080,
+        isUrgent: false,
+      });
+    });
+
+    it('returns null after evening end (overdue)', () => {
+      expect(getCountdownTarget(1100, true, DEFAULT_SCHEDULE)).toBeNull();
+    });
+  });
+
+  // Null/unknown state
+  describe('when state is null', () => {
+    it('returns null for unknown clock state', () => {
+      expect(getCountdownTarget(600, null, DEFAULT_SCHEDULE)).toBeNull();
+    });
+  });
+
+  // Exact boundary tests
+  describe('exact boundaries', () => {
+    it('switches from non-urgent to urgent exactly at morningStart', () => {
+      const before = getCountdownTarget(539, false, DEFAULT_SCHEDULE);
+      const at = getCountdownTarget(540, false, DEFAULT_SCHEDULE);
+      expect(before.isUrgent).toBe(false);
+      expect(before.label).toBe('Entrata Mattina');
+      expect(at.isUrgent).toBe(true);
+      expect(at.label).toBe('Entrata Mattina (scadenza)');
+    });
+
+    it('switches target at lunchEnd for not-clocked-in', () => {
+      const before = getCountdownTarget(779, false, DEFAULT_SCHEDULE);
+      const at = getCountdownTarget(780, false, DEFAULT_SCHEDULE);
+      expect(before.targetMinutes).toBe(780); // lunchEnd
+      expect(at.targetMinutes).toBe(840); // afternoonStart
+    });
+
+    it('switches target at lunchEnd for clocked-in', () => {
+      const before = getCountdownTarget(779, true, DEFAULT_SCHEDULE);
+      const at = getCountdownTarget(780, true, DEFAULT_SCHEDULE);
+      expect(before.label).toBe('Uscita Pranzo');
+      expect(at.label).toBe('Uscita Pranzo (scadenza)');
+    });
+
+    it('switches target at afternoonStart for clocked-in', () => {
+      const before = getCountdownTarget(839, true, DEFAULT_SCHEDULE);
+      const at = getCountdownTarget(840, true, DEFAULT_SCHEDULE);
+      expect(before.label).toBe('Uscita Pranzo (scadenza)');
+      expect(at.label).toBe('Uscita Serale');
+    });
+
+    it('returns null exactly at eveningEnd for clocked-in', () => {
+      const before = getCountdownTarget(1079, true, DEFAULT_SCHEDULE);
+      const at = getCountdownTarget(1080, true, DEFAULT_SCHEDULE);
+      expect(before).not.toBeNull();
+      expect(at).toBeNull();
+    });
+  });
+
+  // Custom schedule
+  describe('with custom schedule', () => {
+    const CUSTOM = {
+      morningStart: 8 * 60,
+      lunchEnd: 12 * 60,
+      afternoonStart: 13 * 60,
+      eveningEnd: 17 * 60,
+    };
+
+    it('respects custom morning start', () => {
+      const result = getCountdownTarget(450, false, CUSTOM); // 07:30
+      expect(result.targetMinutes).toBe(480); // 08:00
+    });
+
+    it('respects custom evening end', () => {
+      const result = getCountdownTarget(960, true, CUSTOM); // 16:00
+      expect(result.targetMinutes).toBe(1020); // 17:00
+    });
+  });
+});
+
+// === ADDITIONAL EDGE CASES ===
+
+describe('getNotificationsToSend - edge cases', () => {
+  const window = 5;
+
+  it('returns empty for null isTimbrato', () => {
+    const result = getNotificationsToSend(540, null, DEFAULT_SCHEDULE, window);
+    expect(result).toEqual([]);
+  });
+
+  it('does not trigger morning when clocked in at morning start', () => {
+    const result = getNotificationsToSend(540, true, DEFAULT_SCHEDULE, window);
+    expect(result).not.toContain('morning');
+  });
+
+  it('does not trigger when exactly at window end (exclusive)', () => {
+    const result = getNotificationsToSend(545, false, DEFAULT_SCHEDULE, window);
+    expect(result).not.toContain('morning');
+  });
+
+  it('triggers at last minute of window', () => {
+    const result = getNotificationsToSend(544, false, DEFAULT_SCHEDULE, window);
+    expect(result).toContain('morning');
+  });
+});
+
+describe('shouldBlink - null state', () => {
+  it('does not blink when isTimbrato is null', () => {
+    expect(shouldBlink(600, null, DEFAULT_SCHEDULE)).toBe(false);
   });
 });
