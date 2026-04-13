@@ -40,10 +40,12 @@ export function sanitizeDescription(value) {
  */
 export function parseTimeToHoursMinutes(timeStr) {
   if (!timeStr || typeof timeStr !== 'string' || !timeStr.includes(':')) {
+    console.warn('[Timbratura] parseTimeToHoursMinutes: input non valido:', timeStr); // eslint-disable-line no-console
     return { h: 0, m: 0 };
   }
   const [h, m] = timeStr.split(':').map(Number);
   if (isNaN(h) || isNaN(m)) {
+    console.warn('[Timbratura] parseTimeToHoursMinutes: valore non numerico:', timeStr); // eslint-disable-line no-console
     return { h: 0, m: 0 };
   }
   return { h, m };

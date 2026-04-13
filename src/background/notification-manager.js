@@ -2,7 +2,7 @@
  * Desktop notification management: sending, scheduling, and startup notifications.
  */
 
-import { log } from '../shared/logging.js';
+import { log, logError } from '../shared/logging.js';
 import { getNotificationsToSend } from '../time-utils.js';
 import {
   NOTIFICATION_MESSAGES,
@@ -10,11 +10,11 @@ import {
   NOTIFICATION_WINDOW_MINUTES,
 } from '../shared/constants.js';
 import { getStartupNotificationType } from '../shared/validation.js';
-import { storageSet } from './storage-helpers.js';
+import { storageSet, storageGet } from './storage-helpers.js';
 
 /** Send a desktop notification with optional urgency. */
 export function sendNotification(title, message, urgent = false) {
-  chrome.storage.local.get({ enableNotifications: true }, function (options) {
+  storageGet({ enableNotifications: true }, function (options) {
     if (!options.enableNotifications) return;
 
     const notificationOptions = {
@@ -30,6 +30,10 @@ export function sendNotification(title, message, urgent = false) {
       'timbratura-' + Date.now(),
       notificationOptions,
       function (notificationId) {
+        if (chrome.runtime.lastError) {
+          logError('[Notifica] Creazione fallita:', chrome.runtime.lastError.message);
+          return;
+        }
         log('[Notifica] Inviata:', title);
 
         if (!urgent) {
@@ -48,7 +52,7 @@ export function sendNotification(title, message, urgent = false) {
  * for MV3 service workers that get killed and restarted frequently).
  */
 export function checkAndSendNotifications(currentTime, isTimbrato, workSchedule) {
-  chrome.storage.local.get({ notificationsSent: {} }, function (data) {
+  storageGet({ notificationsSent: {} }, function (data) {
     const today = new Date().toDateString();
     let stored = data.notificationsSent;
 

@@ -4,7 +4,7 @@
  */
 
 import { shouldBlink } from '../time-utils.js';
-import { log, logError } from '../shared/logging.js';
+import { log } from '../shared/logging.js';
 import {
   VALID_SOUND_TYPES,
   STATUS_CHECK_MS,
@@ -12,7 +12,7 @@ import {
   STARTUP_DELAY_MS,
 } from '../shared/constants.js';
 import { isAllowedOrigin } from '../shared/validation.js';
-import { storageSet } from './storage-helpers.js';
+import { storageSet, storageGet, storageRemove } from './storage-helpers.js';
 import {
   setIcon,
   startBlinking,
@@ -31,20 +31,18 @@ import {
 } from './schedule-manager.js';
 
 /** Check if icon should blink (combines exclusion check + schedule check + notifications). */
-function checkShouldBlink(isTimbrato, callback) {
+function checkShouldBlink(isTimbrato, schedule, callback) {
   isExcludedDay(function (result) {
     if (result.excluded) {
       callback(false);
       return;
     }
 
-    loadWorkSchedule(function () {
-      const now = new Date();
-      const currentTime = now.getHours() * 60 + now.getMinutes();
+    const now = new Date();
+    const currentTime = now.getHours() * 60 + now.getMinutes();
 
-      checkAndSendNotifications(currentTime, isTimbrato, getWorkSchedule());
-      callback(shouldBlink(currentTime, isTimbrato, getWorkSchedule()));
-    });
+    checkAndSendNotifications(currentTime, isTimbrato, schedule);
+    callback(shouldBlink(currentTime, isTimbrato, schedule));
   });
 }
 
@@ -69,17 +67,29 @@ function openDipendentiInCloud() {
  * module-level variables reset to defaults while storage retains stale values.
  */
 function syncStateOnWakeUp(callback) {
-  chrome.storage.local.get(['isBlinking'], function (data) {
-    if (chrome.runtime.lastError) {
-      logError('syncStateOnWakeUp storage.get fallito:', chrome.runtime.lastError.message);
-      if (callback) callback();
-      return;
-    }
+  storageGet(['isBlinking'], function (data) {
     if (data.isBlinking && !isCurrentlyBlinking()) {
       storageSet({ isBlinking: false });
     }
     if (callback) callback();
   });
+}
+
+/** Activate blink state: start blinking and optionally play sound if not muted. */
+function activateBlinkState(baseState, isMuted) {
+  startBlinking(baseState);
+  storageSet({ isBlinking: true });
+  if (!isMuted) {
+    startSound();
+  }
+}
+
+/** Deactivate blink state: stop blinking, stop sound, restore static icon. */
+function deactivateBlinkState(baseState) {
+  stopBlinking();
+  stopSound();
+  setIcon(baseState);
+  storageSet({ isBlinking: false });
 }
 
 /** Handle the updateIcon action: determine state, blink/sound, update badge. */
@@ -94,34 +104,22 @@ function handleUpdateIcon(isTimbrato) {
   }
 
   if (isTimbrato !== null) {
-    checkShouldBlink(isTimbrato, function (shouldBlinkNow) {
-      if (shouldBlinkNow) {
-        const situationId = getCurrentSituationId();
-        chrome.storage.local.get(['mutedSituation'], function (data) {
-          if (data.mutedSituation === situationId) {
-            startBlinking(baseState);
-            storageSet({ isBlinking: true });
-          } else {
-            startBlinking(baseState);
-            startSound();
-            storageSet({ isBlinking: true });
-          }
-        });
-      } else {
-        stopBlinking();
-        stopSound();
-        setIcon(baseState);
-        storageSet({ isBlinking: false });
-      }
-      loadWorkSchedule(function () {
-        updateBadgeCountdown(isTimbrato, getWorkSchedule());
+    loadWorkSchedule(function () {
+      const schedule = getWorkSchedule();
+      checkShouldBlink(isTimbrato, schedule, function (shouldBlinkNow) {
+        if (shouldBlinkNow) {
+          const situationId = getCurrentSituationId();
+          storageGet(['mutedSituation'], function (data) {
+            activateBlinkState(baseState, data.mutedSituation === situationId);
+          });
+        } else {
+          deactivateBlinkState(baseState);
+        }
+        updateBadgeCountdown(isTimbrato, schedule);
       });
     });
   } else {
-    stopBlinking();
-    stopSound();
-    setIcon(baseState);
-    storageSet({ isBlinking: false });
+    deactivateBlinkState(baseState);
     loadWorkSchedule(function () {
       updateBadgeCountdown(isTimbrato, getWorkSchedule());
     });
@@ -130,7 +128,7 @@ function handleUpdateIcon(isTimbrato) {
 
 /** Check status on startup: auto-open site, restore blink/sound state. */
 function checkStatusOnStartup() {
-  chrome.storage.local.get({ autoOpenSite: true }, function (options) {
+  storageGet({ autoOpenSite: true }, function (options) {
     if (options.autoOpenSite) {
       isWorkingHours(function (isWorking) {
         if (isWorking) {
@@ -142,7 +140,7 @@ function checkStatusOnStartup() {
     }
   });
 
-  chrome.storage.local.get('timbratureStatus', function (data) {
+  storageGet('timbratureStatus', function (data) {
     if (data && data.timbratureStatus && data.timbratureStatus.isTimbrato !== null) {
       const raw = data.timbratureStatus.isTimbrato;
       const isTimbrato = raw === true ? true : raw === false ? false : null;
@@ -152,30 +150,23 @@ function checkStatusOnStartup() {
         return;
       }
       const baseState = isTimbrato ? 'green' : 'red';
+      const schedule = getWorkSchedule();
 
-      checkShouldBlink(isTimbrato, function (shouldBlinkNow) {
+      checkShouldBlink(isTimbrato, schedule, function (shouldBlinkNow) {
         if (shouldBlinkNow) {
           const situationId = getCurrentSituationId();
-          chrome.storage.local.get(['mutedSituation'], function (mutedData) {
-            if (mutedData.mutedSituation === situationId) {
-              startBlinking(baseState);
-              storageSet({ isBlinking: true });
-            } else {
-              startBlinking(baseState);
-              startSound();
-              storageSet({ isBlinking: true });
+          storageGet(['mutedSituation'], function (mutedData) {
+            const isMuted = mutedData.mutedSituation === situationId;
+            activateBlinkState(baseState, isMuted);
 
-              loadWorkSchedule(function () {
-                sendStartupNotification(isTimbrato, getWorkSchedule());
-              });
+            if (!isMuted) {
+              sendStartupNotification(isTimbrato, schedule);
             }
           });
         } else {
           setIcon(baseState);
         }
-        loadWorkSchedule(function () {
-          updateBadgeCountdown(isTimbrato, getWorkSchedule());
-        });
+        updateBadgeCountdown(isTimbrato, schedule);
       });
     } else {
       setIcon('na');
@@ -229,16 +220,16 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
 
 // Check blink/sound state every 30 seconds
 setInterval(() => {
-  chrome.storage.local.get(
-    ['timbratureStatus', 'mutedSituation', 'lastSituationId'],
-    function (data) {
-      if (data && data.timbratureStatus && data.timbratureStatus.isTimbrato !== null) {
-        const raw = data.timbratureStatus.isTimbrato;
-        const isTimbrato = raw === true ? true : raw === false ? false : null;
-        if (isTimbrato === null) return;
-        const baseState = isTimbrato ? 'green' : 'red';
+  storageGet(['timbratureStatus', 'mutedSituation', 'lastSituationId'], function (data) {
+    if (data && data.timbratureStatus && data.timbratureStatus.isTimbrato !== null) {
+      const raw = data.timbratureStatus.isTimbrato;
+      const isTimbrato = raw === true ? true : raw === false ? false : null;
+      if (isTimbrato === null) return;
+      const baseState = isTimbrato ? 'green' : 'red';
 
-        checkShouldBlink(isTimbrato, function (shouldBlinkNow) {
+      loadWorkSchedule(function () {
+        const schedule = getWorkSchedule();
+        checkShouldBlink(isTimbrato, schedule, function (shouldBlinkNow) {
           const currentSituationId = getCurrentSituationId();
           const lastSituationId = data.lastSituationId;
           const situationChanged = currentSituationId !== lastSituationId;
@@ -247,44 +238,30 @@ setInterval(() => {
             if (situationChanged && currentSituationId) {
               log('[Background] Situazione cambiata:', lastSituationId, '->', currentSituationId);
               storageSet({ lastSituationId: currentSituationId });
-              chrome.storage.local.remove('mutedSituation');
+              storageRemove('mutedSituation');
               stopSound();
-              startBlinking(baseState);
-              startSound();
-              storageSet({ isBlinking: true });
+              activateBlinkState(baseState, false);
             } else if (!isCurrentlyBlinking()) {
-              if (data.mutedSituation === currentSituationId) {
-                startBlinking(baseState);
-                storageSet({ isBlinking: true });
-              } else {
-                startBlinking(baseState);
-                startSound();
-                storageSet({ isBlinking: true });
-              }
+              activateBlinkState(baseState, data.mutedSituation === currentSituationId);
 
               if (currentSituationId) {
                 storageSet({ lastSituationId: currentSituationId });
               }
             }
           } else if (!shouldBlinkNow && isCurrentlyBlinking()) {
-            stopBlinking();
-            stopSound();
-            setIcon(baseState);
-            storageSet({ isBlinking: false });
-            chrome.storage.local.remove('mutedSituation');
+            deactivateBlinkState(baseState);
+            storageRemove('mutedSituation');
           }
-          loadWorkSchedule(function () {
-            updateBadgeCountdown(isTimbrato, getWorkSchedule());
-          });
+          updateBadgeCountdown(isTimbrato, schedule);
         });
-      }
+      });
     }
-  );
+  });
 }, STATUS_CHECK_MS);
 
 // Update badge countdown every minute
 setInterval(() => {
-  chrome.storage.local.get('timbratureStatus', function (data) {
+  storageGet('timbratureStatus', function (data) {
     if (data && data.timbratureStatus && data.timbratureStatus.isTimbrato !== null) {
       loadWorkSchedule(function () {
         updateBadgeCountdown(data.timbratureStatus.isTimbrato, getWorkSchedule());

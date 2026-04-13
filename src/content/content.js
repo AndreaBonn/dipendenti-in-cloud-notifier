@@ -10,6 +10,13 @@ function logWarn(...args) {
   console.warn('[Timbratura]', ...args); // eslint-disable-line no-console
 }
 
+// Throttle for clickTimbra to prevent accidental double clicks (5 second lock)
+const CLICK_TIMBRA_COOLDOWN_MS = 5000;
+let lastClickTimbraTime = 0;
+
+// Validate HH:MM format (0-23 hours, 0-59 minutes)
+const TIME_FORMAT_STRICT = /^(?:[01]?\d|2[0-3]):[0-5]\d$/;
+
 // Funzione per estrarre le timbrature di oggi
 function extractTimbratureOggi() {
   const timbratureOggi = [];
@@ -28,7 +35,7 @@ function extractTimbratureOggi() {
       const timeMatches = text.match(/\d{1,2}:\d{2}/g);
       if (timeMatches) {
         timeMatches.forEach((time) => {
-          if (!timbratureOggi.includes(time)) {
+          if (TIME_FORMAT_STRICT.test(time) && !timbratureOggi.includes(time)) {
             timbratureOggi.push(time);
           }
         });
@@ -265,7 +272,10 @@ function checkTimbratura() {
             (isTimbrato ? 'TIMBRATO' : 'NON TIMBRATO')
         );
       } else {
-        log('[Timbratura] Stato: SCONOSCIUTO (nessun indicatore trovato)');
+        logWarn(
+          'Stato: SCONOSCIUTO — nessuna strategia di detection ha funzionato. URL:',
+          document.location.href
+        );
       }
     }
 
@@ -341,15 +351,20 @@ function isRuntimeValid() {
 }
 
 const DEBOUNCE_DELAY = 500; // ms — evita check multipli su micro-mutazioni DOM della SPA
+const MIN_CHECK_INTERVAL_MS = 10000; // ms — cooldown assoluto tra check consecutivi
 
 // Funzione per osservare cambiamenti nella pagina
 function setupObserver() {
   let debounceTimer = null;
+  let lastCheckTime = 0;
 
   const observer = new MutationObserver(function (_mutations) {
     if (isRuntimeValid()) {
       clearTimeout(debounceTimer);
       debounceTimer = setTimeout(function () {
+        const now = Date.now();
+        if (now - lastCheckTime < MIN_CHECK_INTERVAL_MS) return;
+        lastCheckTime = now;
         checkTimbratura();
       }, DEBOUNCE_DELAY);
     } else {
@@ -551,7 +566,17 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
       return true; // Importante per le risposte asincrone
     }
   } else if (request.action === 'clickTimbra') {
-    // Clicca sul bottone di timbratura
+    // Throttle: prevent double-click within 5 seconds
+    const now = Date.now();
+    if (now - lastClickTimbraTime < CLICK_TIMBRA_COOLDOWN_MS) {
+      sendResponse({
+        success: false,
+        message: 'Operazione troppo frequente. Riprova tra qualche secondo.',
+      });
+      return true;
+    }
+    lastClickTimbraTime = now;
+
     const result = clickTimbraButton();
     sendResponse(result);
   } else if (request.action === 'extractAssenze') {

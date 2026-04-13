@@ -132,18 +132,26 @@ function playSound(soundType = 'classic', volume = 0.5) {
     audioContext = new AudioContext();
   }
 
-  // Riprendi il contesto se è sospeso (policy browser)
-  if (audioContext.state === 'suspended') {
-    audioContext.resume().catch(function (err) {
-      console.error('[Audio] resume audioContext fallito:', err.message); // eslint-disable-line no-console
-    });
-  }
-
   const sound = SOUNDS[soundType] || SOUNDS.classic;
-  sound.play(audioContext, volume);
+
+  // Attendi resume prima di riprodurre se il contesto è sospeso (policy browser)
+  if (audioContext.state === 'suspended') {
+    audioContext
+      .resume()
+      .then(function () {
+        sound.play(audioContext, volume);
+      })
+      .catch(function (err) {
+        console.error('[Audio] resume audioContext fallito:', err.message); // eslint-disable-line no-console
+      });
+  } else {
+    sound.play(audioContext, volume);
+  }
 }
 
-// Valid sound types whitelist (local copy for defense-in-depth)
+// Valid sound types whitelist (local copy for defense-in-depth).
+// Must stay in sync with VALID_SOUND_TYPES in shared/constants.js.
+// Offscreen documents cannot use ES module imports (MV3 limitation).
 const VALID_SOUND_TYPES = Object.keys(SOUNDS);
 
 // Ascoltiamo i messaggi dal background script

@@ -4,6 +4,7 @@
 
 import { logError } from '../shared/logging.js';
 import { VALID_SOUND_TYPES, SOUND_REPEAT_MS } from '../shared/constants.js';
+import { storageGet } from './storage-helpers.js';
 
 let soundInterval = null;
 
@@ -41,7 +42,7 @@ export function sendToOffscreen(message) {
 
 /** Play the notification sound using current user preferences. */
 function playNotificationSound() {
-  chrome.storage.local.get(
+  storageGet(
     {
       enableSound: true,
       soundType: 'classic',

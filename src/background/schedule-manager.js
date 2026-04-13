@@ -4,6 +4,7 @@
 
 import { timeToMinutes, checkExclusion, getSituationId } from '../time-utils.js';
 import { DEFAULT_SCHEDULE_STRINGS } from '../shared/constants.js';
+import { storageGet } from './storage-helpers.js';
 
 const workSchedule = {
   morningStart: 9 * 60,
@@ -19,7 +20,7 @@ export function getWorkSchedule() {
 
 /** Load custom work schedule from chrome.storage into the in-memory object. */
 export function loadWorkSchedule(callback) {
-  chrome.storage.local.get(
+  storageGet(
     {
       morningStart: DEFAULT_SCHEDULE_STRINGS.morningStart,
       lunchEnd: DEFAULT_SCHEDULE_STRINGS.lunchEnd,
@@ -49,7 +50,7 @@ export function getCurrentSituationId() {
  * Reads exclusion settings from storage and delegates to checkExclusion().
  */
 export function isExcludedDay(callback) {
-  chrome.storage.local.get(
+  storageGet(
     {
       excludeWeekends: true,
       fullDayExclusions: [],
