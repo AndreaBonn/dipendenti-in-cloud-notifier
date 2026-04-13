@@ -6,7 +6,7 @@
   "author": "Andrea Bonacci",
   "homepage_url": "https://github.com/AndreaBonn/PRIVATE__EstensioneChrome_DipendentiInCloud",
   "action": {
-    "default_popup": "popup.html",
+    "default_popup": "src/pages/popup/popup.html",
     "default_icon": {
       "16": "images/timer-green-16.png",
       "48": "images/timer-green-48.png",
@@ -22,14 +22,14 @@
   "content_scripts": [
     {
       "matches": ["*://secure.dipendentincloud.it/*", "*://cloud.dipendentincloud.it/*"],
-      "js": ["content.js"]
+      "js": ["src/content/content.js"]
     }
   ],
   "background": {
-    "service_worker": "background.js",
+    "service_worker": "src/background/index.js",
     "type": "module"
   },
-  "options_page": "options.html",
+  "options_page": "src/pages/options/options.html",
   "icons": {
     "16": "images/timer-green-16.png",
     "48": "images/timer-green-48.png",
