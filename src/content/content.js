@@ -103,10 +103,18 @@ function extractAssenze() {
         dateMatches.forEach((dateStr) => {
           // Converti in formato ISO
           const parts = dateStr.split(/[/\-.]/);
-          const day = parts[0].padStart(2, '0');
-          const month = parts[1].padStart(2, '0');
-          const year = parts[2];
-          const isoDate = `${year}-${month}-${day}`;
+          const dayNum = parseInt(parts[0], 10);
+          const monthNum = parseInt(parts[1], 10);
+          const yearNum = parseInt(parts[2], 10);
+
+          // Bounds check before ISO conversion
+          if (dayNum < 1 || dayNum > 31 || monthNum < 1 || monthNum > 12 || yearNum < 2020) {
+            return;
+          }
+
+          const day = String(dayNum).padStart(2, '0');
+          const month = String(monthNum).padStart(2, '0');
+          const isoDate = `${yearNum}-${month}-${day}`;
 
           // Verifica se è una data valida
           const date = new Date(isoDate);
@@ -540,9 +548,14 @@ function clickTimbraButton() {
 }
 
 // Rispondiamo ai messaggi dal popup
+const VALID_ACTIONS = ['getStatus', 'clickTimbra', 'extractAssenze'];
+
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
   // Accetta solo messaggi dall'estensione stessa
   if (sender.id !== chrome.runtime.id) return;
+
+  // Validate request structure
+  if (!request || typeof request !== 'object' || !VALID_ACTIONS.includes(request.action)) return;
 
   if (request.action === 'getStatus') {
     // Se siamo nella pagina di Dipendenti in Cloud, controlliamo lo stato in tempo reale

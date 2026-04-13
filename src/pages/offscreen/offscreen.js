@@ -129,7 +129,12 @@ function createBellTone(ctx, frequency, duration, startTime, volume) {
 // Funzione principale per riprodurre il suono
 function playSound(soundType = 'classic', volume = 0.5) {
   if (!audioContext) {
-    audioContext = new AudioContext();
+    try {
+      audioContext = new AudioContext();
+    } catch (err) {
+      console.error('[Audio] Impossibile creare AudioContext:', err.message); // eslint-disable-line no-console
+      return;
+    }
   }
 
   const sound = SOUNDS[soundType] || SOUNDS.classic;
@@ -172,8 +177,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
   if (request.action === 'playSound' || request.action === 'testSound') {
     const soundType = VALID_SOUND_TYPES.includes(request.soundType) ? request.soundType : 'classic';
-    const volume =
-      request.volume !== undefined ? Math.max(0, Math.min(1, Number(request.volume) || 0.5)) : 0.5;
+    const rawVolume = request.volume !== undefined ? Number(request.volume) : NaN;
+    const volume = Math.max(0, Math.min(1, Number.isFinite(rawVolume) ? rawVolume : 0.5));
 
     playSound(soundType, volume);
     sendResponse({ success: true });

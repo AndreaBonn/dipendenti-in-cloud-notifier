@@ -122,6 +122,10 @@ export function addFullDayExclusion() {
   }
 
   chrome.storage.local.get({ fullDayExclusions: [] }, function (items) {
+    if (chrome.runtime.lastError) {
+      showToast('Errore lettura esclusioni: ' + chrome.runtime.lastError.message, 'error');
+      return;
+    }
     const exclusions = items.fullDayExclusions;
 
     if (exclusions.length >= MAX_EXCLUSIONS) {
@@ -173,6 +177,10 @@ export function addHalfDayExclusion() {
   }
 
   chrome.storage.local.get({ halfDayExclusions: [] }, function (items) {
+    if (chrome.runtime.lastError) {
+      showToast('Errore lettura esclusioni: ' + chrome.runtime.lastError.message, 'error');
+      return;
+    }
     const exclusions = items.halfDayExclusions;
 
     if (exclusions.length >= MAX_EXCLUSIONS) {
@@ -206,6 +214,10 @@ export function addHalfDayExclusion() {
 // Rimuovi giornata intera
 function removeFullDayExclusion(date) {
   chrome.storage.local.get({ fullDayExclusions: [] }, function (items) {
+    if (chrome.runtime.lastError) {
+      showToast('Errore lettura esclusioni: ' + chrome.runtime.lastError.message, 'error');
+      return;
+    }
     const exclusions = items.fullDayExclusions.filter((e) => e.date !== date);
 
     chrome.storage.local.set({ fullDayExclusions: exclusions }, function () {
@@ -221,6 +233,10 @@ function removeFullDayExclusion(date) {
 // Rimuovi mezza giornata
 function removeHalfDayExclusion(date, period) {
   chrome.storage.local.get({ halfDayExclusions: [] }, function (items) {
+    if (chrome.runtime.lastError) {
+      showToast('Errore lettura esclusioni: ' + chrome.runtime.lastError.message, 'error');
+      return;
+    }
     const exclusions = items.halfDayExclusions.filter(
       (e) => !(e.date === date && e.period === period)
     );

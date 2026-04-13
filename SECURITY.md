@@ -25,6 +25,7 @@ This extension follows security best practices:
 - **Minimal permissions** — only `activeTab`, `notifications`, `storage`, `offscreen`
 - **Host-restricted** — only activates on `secure.dipendentincloud.it`
 - **Origin validation** — all message handlers verify `sender.id === chrome.runtime.id`
+- **Action whitelist** — message handlers only accept known actions via `VALID_ACTIONS`
 - **No remote code** — all code is bundled locally, no CDN or external scripts
 - **Safe DOM manipulation** — `textContent` and `createElement` only, never `innerHTML`
 - **Input sanitization** — sound types validated against whitelist, volumes clamped

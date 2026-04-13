@@ -110,8 +110,9 @@ function saveOptions() {
               showToast('Permesso notifiche negato dal browser', 'warning');
             }
           })
-          .catch(function () {
-            // Ignored — non-secure context or already permanently denied
+          .catch(function (err) {
+            // Non-secure context or API not available — non-blocking
+            showToast('Permesso notifiche non disponibile: ' + (err.message || err), 'warning');
           });
       }
     }

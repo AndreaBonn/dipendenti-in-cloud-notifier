@@ -84,6 +84,13 @@ export function updateCountdown(isTimbrato, countdownElement) {
         eveningEnd: DEFAULT_SCHEDULE_STRINGS.eveningEnd,
       },
       function (scheduleData) {
+        if (chrome.runtime.lastError) {
+          // eslint-disable-next-line no-console
+          console.warn(
+            '[Countdown] Caricamento schedule fallito, uso default:',
+            chrome.runtime.lastError.message
+          );
+        }
         const mStart = parseTimeToHoursMinutes(scheduleData.morningStart);
         const lEnd = parseTimeToHoursMinutes(scheduleData.lunchEnd);
         const aStart = parseTimeToHoursMinutes(scheduleData.afternoonStart);

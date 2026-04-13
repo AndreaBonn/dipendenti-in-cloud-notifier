@@ -21,25 +21,30 @@ export function sendToOffscreen(message) {
     });
   }
 
-  chrome.offscreen.hasDocument().then((exists) => {
-    if (exists) {
-      doSend();
-    } else {
-      chrome.offscreen
-        .createDocument({
-          url: 'src/pages/offscreen/offscreen.html',
-          reasons: ['AUDIO_PLAYBACK'],
-          justification: 'Riproduzione suono di notifica',
-        })
-        .then(() => {
-          // Fresh creation — small delay to let the listener register
-          setTimeout(doSend, 50);
-        })
-        .catch((error) => {
-          logError('Errore creazione offscreen document:', error.message);
-        });
-    }
-  });
+  chrome.offscreen
+    .hasDocument()
+    .then((exists) => {
+      if (exists) {
+        doSend();
+      } else {
+        chrome.offscreen
+          .createDocument({
+            url: 'src/pages/offscreen/offscreen.html',
+            reasons: ['AUDIO_PLAYBACK'],
+            justification: 'Riproduzione suono di notifica',
+          })
+          .then(() => {
+            // Fresh creation — small delay to let the listener register
+            setTimeout(doSend, 50);
+          })
+          .catch((error) => {
+            logError('Errore creazione offscreen document:', error.message);
+          });
+      }
+    })
+    .catch((error) => {
+      logError('hasDocument() fallito — suono non riprodotto:', error.message);
+    });
 }
 
 /** Play the notification sound using current user preferences. */
@@ -56,7 +61,8 @@ function playNotificationSound() {
       const soundType = VALID_SOUND_TYPES.includes(options.soundType)
         ? options.soundType
         : 'classic';
-      const volume = Math.max(0, Math.min(1, Number(options.soundVolume / 100) || 0.5));
+      const rawVolume = Number(options.soundVolume / 100);
+      const volume = Math.max(0, Math.min(1, Number.isFinite(rawVolume) ? rawVolume : 0.5));
 
       sendToOffscreen({
         action: 'playSound',
