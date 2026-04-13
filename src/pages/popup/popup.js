@@ -4,6 +4,7 @@
  */
 
 import { updateCountdown, clearCountdown } from './countdown.js';
+import { isAllowedOrigin } from '../../shared/validation.js';
 
 function logWarn(...args) {
   console.warn('[Timbratura Popup]', ...args); // eslint-disable-line no-console
@@ -188,18 +189,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
       const currentTab = tabs[0];
 
-      function isTabAllowed(url) {
-        try {
-          const parsed = new URL(url || '');
-          return [
-            'https://secure.dipendentincloud.it',
-            'https://cloud.dipendentincloud.it',
-          ].includes(parsed.origin);
-        } catch (_error) {
-          return false;
-        }
-      }
-      if (!isTabAllowed(currentTab.url)) {
+      if (!isAllowedOrigin(currentTab.url || '')) {
         return;
       }
 

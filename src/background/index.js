@@ -5,24 +5,30 @@
 
 import { shouldBlink } from '../time-utils.js';
 import { log, logError } from '../shared/logging.js';
-import { VALID_SOUND_TYPES, ALLOWED_ORIGINS, STATUS_CHECK_MS, BADGE_UPDATE_MS, STARTUP_DELAY_MS } from '../shared/constants.js';
+import {
+  VALID_SOUND_TYPES,
+  STATUS_CHECK_MS,
+  BADGE_UPDATE_MS,
+  STARTUP_DELAY_MS,
+} from '../shared/constants.js';
+import { isAllowedOrigin } from '../shared/validation.js';
 import { storageSet } from './storage-helpers.js';
-import { setIcon, startBlinking, stopBlinking, isCurrentlyBlinking, updateBadgeCountdown } from './icon-manager.js';
+import {
+  setIcon,
+  startBlinking,
+  stopBlinking,
+  isCurrentlyBlinking,
+  updateBadgeCountdown,
+} from './icon-manager.js';
 import { startSound, stopSound, sendToOffscreen } from './sound-manager.js';
 import { checkAndSendNotifications, sendStartupNotification } from './notification-manager.js';
-import { loadWorkSchedule, getWorkSchedule, getCurrentSituationId, isExcludedDay, isWorkingHours } from './schedule-manager.js';
-
-// --- Internal helpers ---
-
-/** Validate URL origin against allowlist using URL parser. */
-function isAllowedOrigin(url) {
-  try {
-    const parsed = new URL(url);
-    return ALLOWED_ORIGINS.includes(parsed.origin);
-  } catch (_error) {
-    return false;
-  }
-}
+import {
+  loadWorkSchedule,
+  getWorkSchedule,
+  getCurrentSituationId,
+  isExcludedDay,
+  isWorkingHours,
+} from './schedule-manager.js';
 
 /** Check if icon should blink (combines exclusion check + schedule check + notifications). */
 function checkShouldBlink(isTimbrato, callback) {

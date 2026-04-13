@@ -4,7 +4,12 @@
 
 import { log } from '../shared/logging.js';
 import { getNotificationsToSend } from '../time-utils.js';
-import { NOTIFICATION_MESSAGES, NOTIFICATION_AUTO_CLOSE_MS, NOTIFICATION_WINDOW_MINUTES } from '../shared/constants.js';
+import {
+  NOTIFICATION_MESSAGES,
+  NOTIFICATION_AUTO_CLOSE_MS,
+  NOTIFICATION_WINDOW_MINUTES,
+} from '../shared/constants.js';
+import { getStartupNotificationType } from '../shared/validation.js';
 import { storageSet } from './storage-helpers.js';
 
 /** Send a desktop notification with optional urgency. */
@@ -75,38 +80,28 @@ export function checkAndSendNotifications(currentTime, isTimbrato, workSchedule)
   });
 }
 
+// Startup notification messages (keyed by type from getStartupNotificationType)
+const STARTUP_MESSAGES = {
+  morning: { title: 'TIMBRA ENTRATA', message: "Non hai ancora timbrato l'entrata del mattino!" },
+  lunch: {
+    title: 'TIMBRA INIZIO PAUSA PRANZO',
+    message: "Non hai ancora timbrato l'uscita per la pausa pranzo!",
+  },
+  afternoon: {
+    title: 'TIMBRA FINE PAUSA PRANZO',
+    message: 'Non hai ancora timbrato il rientro dalla pausa pranzo!',
+  },
+  evening: { title: 'TIMBRA USCITA', message: "Non hai ancora timbrato l'uscita serale!" },
+};
+
 /** Send an immediate notification on startup if clock state requires attention. */
 export function sendStartupNotification(isTimbrato, workSchedule) {
   const now = new Date();
   const currentTime = now.getHours() * 60 + now.getMinutes();
+  const type = getStartupNotificationType(currentTime, isTimbrato, workSchedule);
 
-  if (
-    isTimbrato === false &&
-    currentTime >= workSchedule.morningStart &&
-    currentTime < workSchedule.lunchEnd
-  ) {
-    sendNotification('TIMBRA ENTRATA', "Non hai ancora timbrato l'entrata del mattino!", true);
-  } else if (
-    isTimbrato === true &&
-    currentTime >= workSchedule.lunchEnd &&
-    currentTime < workSchedule.afternoonStart
-  ) {
-    sendNotification(
-      'TIMBRA INIZIO PAUSA PRANZO',
-      "Non hai ancora timbrato l'uscita per la pausa pranzo!",
-      true
-    );
-  } else if (
-    isTimbrato === false &&
-    currentTime >= workSchedule.afternoonStart &&
-    currentTime < workSchedule.eveningEnd
-  ) {
-    sendNotification(
-      'TIMBRA FINE PAUSA PRANZO',
-      'Non hai ancora timbrato il rientro dalla pausa pranzo!',
-      true
-    );
-  } else if (isTimbrato === true && currentTime >= workSchedule.eveningEnd) {
-    sendNotification('TIMBRA USCITA', "Non hai ancora timbrato l'uscita serale!", true);
+  if (type) {
+    const msg = STARTUP_MESSAGES[type];
+    sendNotification(msg.title, msg.message, true);
   }
 }

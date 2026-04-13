@@ -4,6 +4,7 @@
  */
 
 import { checkExclusion, getCountdownTarget } from '../../time-utils.js';
+import { parseTimeToHoursMinutes } from '../../shared/validation.js';
 
 let countdownInterval = null;
 
@@ -55,18 +56,6 @@ function checkExcludedDay(callback) {
       callback({ excluded: true, reason: displayReason });
     }
   );
-}
-
-/** Convert "HH:MM" string to {h, m} object with validation. */
-function parseTimeToHoursMinutes(timeStr) {
-  if (!timeStr || typeof timeStr !== 'string' || !timeStr.includes(':')) {
-    return { h: 0, m: 0 };
-  }
-  const [h, m] = timeStr.split(':').map(Number);
-  if (isNaN(h) || isNaN(m)) {
-    return { h: 0, m: 0 };
-  }
-  return { h, m };
 }
 
 /**

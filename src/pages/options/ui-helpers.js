@@ -1,19 +1,12 @@
 /**
- * UI helper utilities for the options page: toast notifications, confirm dialogs, validation.
+ * UI helper utilities for the options page: toast notifications, confirm dialogs.
+ * Pure validation functions re-exported from shared/validation.js for convenience.
  */
 
+export { isValidDate, sanitizeDescription } from '../../shared/validation.js';
+
 export const MAX_EXCLUSIONS = 365;
-export const MAX_DESCRIPTION_LENGTH = 100;
-export const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
 export const VALID_PERIODS = ['morning', 'afternoon'];
-
-export function isValidDate(dateStr) {
-  return DATE_REGEX.test(dateStr) && !isNaN(new Date(dateStr).getTime());
-}
-
-export function sanitizeDescription(value) {
-  return value.trim().substring(0, MAX_DESCRIPTION_LENGTH);
-}
 
 export function showToast(message, type = 'info', duration = 4000) {
   const container = document.getElementById('toastContainer');
