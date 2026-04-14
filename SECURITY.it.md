@@ -7,9 +7,9 @@
 ## Versioni Supportate
 
 | Versione | Supportata |
-|----------|-----------|
-| 2.x      | Si        |
-| < 2.0    | No        |
+| -------- | ---------- |
+| 2.x      | Si         |
+| < 2.0    | No         |
 
 ## Segnalazione Vulnerabilità
 

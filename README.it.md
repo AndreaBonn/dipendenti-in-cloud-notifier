@@ -42,12 +42,12 @@ Per aggiornare, scarica le ultime modifiche e clicca il pulsante di ricaricament
 
 L'icona dell'estensione nella toolbar di Chrome riflette il tuo stato attuale:
 
-| Colore icona | Significato |
-|-------------|-------------|
-| **Verde** | Sei timbrato. Nessuna azione necessaria. |
-| **Rosso** | Non sei timbrato. |
-| **Rosso lampeggiante** | Devi timbrare adesso. |
-| **Grigio** | Stato sconosciuto (visita il sito per aggiornare). |
+| Colore icona           | Significato                                        |
+| ---------------------- | -------------------------------------------------- |
+| **Verde**              | Sei timbrato. Nessuna azione necessaria.           |
+| **Rosso**              | Non sei timbrato.                                  |
+| **Rosso lampeggiante** | Devi timbrare adesso.                              |
+| **Grigio**             | Stato sconosciuto (visita il sito per aggiornare). |
 
 Un **badge** sull'icona mostra il countdown (in minuti o ore) al prossimo evento di timbratura previsto.
 
@@ -74,14 +74,14 @@ Le notifiche si ripetono ogni pochi minuti finché non timbri o le silenzi.
 
 Tutti i suoni sono generati localmente tramite la Web Audio API. Nessun file audio viene scaricato o incluso nel pacchetto.
 
-| Suono | Carattere | Indicato per |
-|-------|-----------|-------------|
-| Classico | Tre toni morbidi ascendenti, professionale | Uffici condivisi, uso quotidiano |
-| Gentile | Due toni sovrapposti, molto discreto (volume ridotto del 30%) | Ambienti silenziosi, open space |
-| Campanella | Armoniche naturali, simile a notifica smartphone | Home office, lavoro remoto |
-| Digitale | Sequenza rapida di quattro toni, moderno | Ambienti tech, startup |
-| Urgente | Sequenza incisiva ad onda quadra, difficile da ignorare | Ambienti rumorosi |
-| Allarme | Effetto sirena alternato, impossibile da ignorare | Massima allerta (usare con cautela) |
+| Suono      | Carattere                                                     | Indicato per                        |
+| ---------- | ------------------------------------------------------------- | ----------------------------------- |
+| Classico   | Tre toni morbidi ascendenti, professionale                    | Uffici condivisi, uso quotidiano    |
+| Gentile    | Due toni sovrapposti, molto discreto (volume ridotto del 30%) | Ambienti silenziosi, open space     |
+| Campanella | Armoniche naturali, simile a notifica smartphone              | Home office, lavoro remoto          |
+| Digitale   | Sequenza rapida di quattro toni, moderno                      | Ambienti tech, startup              |
+| Urgente    | Sequenza incisiva ad onda quadra, difficile da ignorare       | Ambienti rumorosi                   |
+| Allarme    | Effetto sirena alternato, impossibile da ignorare             | Massima allerta (usare con cautela) |
 
 Il **volume** è regolabile da 0% a 100%. Valori consigliati: 30-40% per uffici condivisi, 50-60% per home office, 70-80% per ambienti rumorosi.
 
@@ -150,13 +150,13 @@ Per il design di sicurezza completo, consulta [SECURITY.it.md](SECURITY.it.md).
 
 Permessi richiesti dall'estensione:
 
-| Permesso | Scopo |
-|----------|-------|
-| `storage` | Salvare impostazioni e stato della timbratura localmente |
-| `notifications` | Inviare promemoria desktop |
-| `offscreen` | Riprodurre avvisi sonori in background tramite Web Audio API |
-| `alarms` | Pianificare controlli periodici che sopravvivono ai riavvii del service worker |
-| Accesso host a `dipendentincloud.it` | Leggere lo stato della timbratura dalla pagina |
+| Permesso                             | Scopo                                                                          |
+| ------------------------------------ | ------------------------------------------------------------------------------ |
+| `storage`                            | Salvare impostazioni e stato della timbratura localmente                       |
+| `notifications`                      | Inviare promemoria desktop                                                     |
+| `offscreen`                          | Riprodurre avvisi sonori in background tramite Web Audio API                   |
+| `alarms`                             | Pianificare controlli periodici che sopravvivono ai riavvii del service worker |
+| Accesso host a `dipendentincloud.it` | Leggere lo stato della timbratura dalla pagina                                 |
 
 ## Contribuire
 
