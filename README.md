@@ -1,205 +1,177 @@
 # Promemoria Timbrature
 
+> **English** | [Italiano](README.it.md)
+>
+> [Contributing](CONTRIBUTING.md) | [Security](SECURITY.md) | [Changelog](CHANGELOG.md)
+
 ![CI](https://github.com/AndreaBonn/PRIVATE__EstensioneChrome_DipendentiInCloud/actions/workflows/ci.yml/badge.svg)
 ![Chrome MV3](https://img.shields.io/badge/Chrome-Manifest_V3-4285F4?logo=googlechrome&logoColor=white)
 ![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)
 ![Version](https://img.shields.io/badge/version-2.0.0-blue)
 ![Zero Dependencies](https://img.shields.io/badge/runtime_deps-0-brightgreen)
 
-Estensione Chrome **NON UFFICIALE** per aiutarti a ricordare di timbrare su dipendentincloud.it.
+A Chrome extension that reminds you to clock in and out on [dipendentincloud.it](https://www.dipendentincloud.it).
 
-## ⚠️ Disclaimer
+## Disclaimer
 
-Questa estensione **NON è ufficiale** e **NON è affiliata** con Dipendenti in Cloud o dipendentincloud.it.
+This extension is **not official** and is **not affiliated** with Dipendenti in Cloud or dipendentincloud.it in any way.
 
-L'utente è **completamente responsabile** delle proprie timbrature. Questa estensione è fornita come strumento di convenienza senza alcuna garanzia.
+The user is **solely responsible** for their own clock-in/out records. This extension is provided as a convenience tool with no warranty of any kind. It does not replace the need to verify your records directly on the platform.
 
-## 🎯 Funzionalità
+## What It Does
 
-### Monitoraggio e Notifiche
+Dipendenti in Cloud is a platform used by companies in Italy to manage employee attendance, payroll documents, and communications. Employees clock in and out through the web interface, and forgetting to do so is a common source of payroll issues.
 
-- ✅ **Stato timbratura in tempo reale** - Mostra se sei timbrato o non timbrato
-- 🎨 **Icona dinamica** - Verde quando timbrato, rossa quando non timbrato, lampeggiante quando devi timbrare
-- ⏰ **Countdown intelligente** - Badge con tempo rimanente alla prossima timbratura (minuti/ore)
-- 🔔 **Notifiche desktop** - Avvisi quando è ora di timbrare (configurabili)
-- 🔊 **Promemoria sonori avanzati** - 6 tipi di suono selezionabili con controllo volume
-  - 🎵 Classico (morbido e professionale)
-  - 🌸 Gentile (discreto e piacevole)
-  - 🔔 Campanella (simile a smartphone)
-  - 💻 Digitale (moderno e tech)
-  - ⚠️ Urgente (più incisivo)
-  - 🚨 Allarme (molto evidente)
-- 🎚️ **Controllo volume** - Regola il volume da 0% a 100%
-- 🔊 **Test suono** - Prova i suoni prima di salvarli
-- 🔕 **Silenzia temporaneamente** - Disattiva le notifiche per la situazione corrente
+This extension monitors your clock status on dipendentincloud.it and alerts you when it is time to punch in or out, using visual cues, desktop notifications, and configurable sounds. It runs entirely in your browser with zero external dependencies and sends no data anywhere.
 
-### Storico e Visualizzazione
+## Installation
 
-- 📋 **Storico timbrature giornaliere** - Visualizza tutte le timbrature del giorno con orari
-- 🕐 **Countdown dettagliato** - Tempo rimanente con indicatori di urgenza (verde/giallo/rosso)
-- ⚡ **Apertura automatica** - Apre Dipendenti in Cloud all'avvio di Chrome (opzionale)
+This extension is not published on the Chrome Web Store. To install it, load it manually in developer mode:
 
-### Personalizzazione
+1. Download or clone this repository.
+2. Open Chrome and navigate to `chrome://extensions/`.
+3. Enable **Developer mode** (toggle in the top-right corner).
+4. Click **Load unpacked** and select the root folder of this repository.
+5. Visit [secure.dipendentincloud.it](https://secure.dipendentincloud.it) and log in. The extension activates automatically.
 
-- ⚙️ **Orari di lavoro personalizzabili** - Configura i tuoi orari:
-  - Entrata mattina (default 09:00)
-  - Uscita pranzo (default 13:00)
-  - Entrata pomeriggio (default 14:00)
-  - Uscita serale (default 18:00)
-- 📅 **Esclusione weekend** - Disattiva notifiche sabato e domenica
-- 🏖️ **Gestione ferie e permessi**:
-  - Giornate intere escluse (ferie)
-  - Mezze giornate escluse (permessi mattina/pomeriggio)
-  - 📥 **Importazione automatica** - Importa assenze direttamente da Dipendenti in Cloud
+To update, pull the latest changes and click the reload button on the extension card in `chrome://extensions/`.
 
-## 📦 Installazione
+## How It Works
 
-### Da Chrome Web Store
+### Icon States
 
-[Link quando pubblicata]
+The extension icon in the Chrome toolbar reflects your current status at a glance:
 
-### Installazione manuale (sviluppatori)
+| Icon color       | Meaning                                     |
+| ---------------- | ------------------------------------------- |
+| **Green**        | You are clocked in. No action needed.       |
+| **Red**          | You are not clocked in.                     |
+| **Blinking red** | You need to clock in or out now.            |
+| **Gray**         | Status unknown (visit the site to refresh). |
 
-1. Scarica o clona questo repository
-2. Apri Chrome e vai su `chrome://extensions/`
-3. Attiva "Modalità sviluppatore" in alto a destra
-4. Clicca "Carica estensione non pacchettizzata"
-5. Seleziona la cartella dell'estensione
+A **badge** on the icon shows a countdown (in minutes or hours) to the next expected clock event.
 
-## 🚀 Utilizzo
+### Popup
 
-### Primo Avvio
+Click the extension icon to open the popup, which displays:
 
-1. Installa l'estensione
-2. Apri dipendentincloud.it e accedi
-3. L'estensione rileverà automaticamente lo stato della timbratura
-4. L'icona cambierà colore in base allo stato (verde/rosso/grigio)
+- Current clock status (in/out/unknown).
+- Detailed countdown to the next clock event, with urgency indicators.
+- Today's complete punch history with timestamps.
+- A button to open Dipendenti in Cloud directly.
+- A mute button to silence the current notification cycle.
 
-### Uso Quotidiano
+### Notifications
 
-- **Icona verde** = Sei timbrato
-- **Icona rossa** = Non sei timbrato
-- **Icona lampeggiante** = Devi timbrare ora!
-- **Badge con numero** = Tempo rimanente alla prossima timbratura
+When it is time to clock in or out, the extension sends:
 
-### Popup Estensione
+- **Desktop notifications** via the Chrome notification system.
+- **Audio alerts** synthesized in real time using the Web Audio API (no external audio files). Six sound profiles are available, each designed for a different environment.
 
-Clicca sull'icona per vedere:
+Notifications repeat every few minutes until you take action or mute them.
 
-- Stato attuale della timbratura
-- Countdown dettagliato alla prossima timbratura
-- Storico completo delle timbrature del giorno
-- Pulsante per aprire rapidamente Dipendenti in Cloud
-- Pulsante "Silenzia" per disattivare temporaneamente le notifiche
+### Sound Profiles
 
-## ⚙️ Configurazione
+All sounds are generated locally via the Web Audio API. No audio files are downloaded or bundled.
 
-Clicca su "⚙️ Opzioni" nel popup per personalizzare:
+| Sound   | Character                                        | Best for                         |
+| ------- | ------------------------------------------------ | -------------------------------- |
+| Classic | Three soft ascending tones, professional         | Shared offices, daily use        |
+| Gentle  | Two overlapping tones, very quiet (30% reduced)  | Silent environments, open spaces |
+| Bell    | Natural harmonics, familiar smartphone-like ring | Home office, remote work         |
+| Digital | Fast four-tone sequence, modern                  | Tech environments, startups      |
+| Urgent  | Sharp square-wave sequence, hard to miss         | Noisy environments               |
+| Alarm   | Alternating siren effect, impossible to ignore   | Maximum alert (use with caution) |
 
-### Impostazioni Generali
+**Volume** is adjustable from 0% to 100%. Recommended ranges: 30-40% for shared offices, 50-60% for home office, 70-80% for noisy environments.
 
-- **Apertura automatica** - Apri Dipendenti in Cloud all'avvio di Chrome
-- **Escludi weekend** - Disattiva notifiche sabato e domenica
+## Configuration
 
-### Notifiche e Suoni
+Right-click the extension icon and select **Options**, or click the Options link in the popup.
 
-- **Notifiche desktop** - Abilita/disabilita le notifiche
-- **Suoni di notifica** - Abilita/disabilita i suoni
-- **Tipo di suono** - Scegli tra 6 suoni diversi (Classico, Gentile, Campanella, Digitale, Urgente, Allarme)
-- **Volume** - Regola il volume da 0% a 100%
-- **Prova suono** - Testa il suono selezionato prima di salvare
+### Work Schedule
 
-### Orari di Lavoro
+Set your personal schedule. The extension uses these times to determine when to send reminders:
 
-Configura i tuoi orari personalizzati:
+- Morning start (default: 09:00)
+- Lunch break (default: 13:00)
+- Afternoon start (default: 14:00)
+- Evening end (default: 18:00)
 
-- Entrata mattina (es. 09:00)
-- Uscita pranzo (es. 13:00)
-- Entrata pomeriggio (es. 14:00)
-- Uscita serale (es. 18:00)
+### Exclusions
 
-### Gestione Assenze
+Prevent notifications on days you are not working:
 
-**Giornate Intere (Ferie)**
+- **Weekend exclusion** -- disables all alerts on Saturdays and Sundays.
+- **Full-day exclusions** -- add specific dates (holidays, PTO) with optional descriptions.
+- **Half-day exclusions** -- mark a morning or afternoon as off (e.g., a medical appointment).
+- **Auto-import** -- import upcoming absences directly from the Dipendenti in Cloud dashboard (next 7 days).
 
-- Aggiungi manualmente le date di ferie
-- Oppure usa "📥 Importa da Dipendenti in Cloud" per importare automaticamente le assenze programmate
-- Aggiungi descrizioni opzionali (es. "Ferie Estive")
+### Notifications and Sound
 
-**Mezze Giornate (Permessi)**
+- Enable or disable desktop notifications independently from sound alerts.
+- Select a sound profile from the six options above.
+- Adjust the volume and preview sounds before saving.
 
-- Aggiungi permessi per mattina (8:00-13:00) o pomeriggio (14:00-18:00)
-- Specifica la data e il periodo
-- Aggiungi descrizioni opzionali (es. "Visita medica")
+### General
 
-## 🔊 Guida ai Suoni
+- **Auto-open** -- automatically open Dipendenti in Cloud when Chrome starts during work hours (optional).
 
-L'estensione offre 6 tipi di suono diversi per adattarsi a ogni ambiente:
+## Troubleshooting
 
-| Suono             | Caratteristiche                            | Quando usarlo                            |
-| ----------------- | ------------------------------------------ | ---------------------------------------- |
-| 🎵 **Classico**   | Tre toni morbidi ascendenti, professionale | Ufficio, uso quotidiano standard         |
-| 🌸 **Gentile**    | Discreto, volume ridotto del 30%           | Open space, ambienti silenziosi          |
-| 🔔 **Campanella** | Simile a notifiche smartphone              | Smart working, suono familiare           |
-| 💻 **Digitale**   | Sequenza rapida moderna                    | Ambiente tech, startup                   |
-| ⚠️ **Urgente**    | Incisivo e impossibile da ignorare         | Ambienti rumorosi                        |
-| 🚨 **Allarme**    | Effetto sirena, molto evidente             | Massima evidenza (può essere fastidioso) |
+**The extension does not detect my status.**
+Visit dipendentincloud.it and make sure you are logged in. The extension needs at least one page load to read the current state.
 
-**Come scegliere:**
+**I do not hear any sound.**
+Check that sound alerts are enabled in the options, the volume slider is above 0%, and your operating system volume is not muted. Chrome must also have audio permissions for the site.
 
-- **Ufficio condiviso**: Gentile o Classico (volume 30-40%)
-- **Home office**: Campanella o Digitale (volume 50-60%)
-- **Ambiente rumoroso**: Urgente o Allarme (volume 70-80%)
-- **Con cuffie**: Qualsiasi suono (volume 20-30%)
+**Notifications are too frequent.**
+Use the mute button in the popup to silence the current cycle, or clock in/out to stop them entirely.
 
-**Prova prima di scegliere**: Usa il pulsante "🔊 Prova Suono" nelle opzioni!
+**The icon stays gray.**
+This means the extension has not been able to determine your status. Reload the Dipendenti in Cloud page.
 
-## 💡 Suggerimenti
+## Privacy and Security
 
-- **Importa le assenze in anticipo** - Usa la funzione di importazione automatica per non ricevere notifiche durante le ferie
-- **Personalizza gli orari** - Adatta gli orari di lavoro al tuo contratto
-- **Scegli il suono giusto** - Usa "Gentile" in ufficio condiviso, "Urgente" in ambienti rumorosi
-- **Regola il volume** - 30-40% per uffici, 50-60% per home office, 70-80% per ambienti rumorosi
-- **Testa prima di salvare** - Usa il pulsante "Prova Suono" per trovare il suono perfetto
-- **Usa il silenziamento** - Se ricevi una notifica ma non puoi timbrare subito, usa il pulsante "Silenzia"
-- **Controlla lo storico** - Verifica nel popup tutte le timbrature del giorno
-- **Disabilita i suoni se necessario** - Puoi mantenere solo le notifiche visive
+- All data is stored locally in `chrome.storage.local`. Nothing is transmitted externally.
+- The extension only reads publicly visible information from the dipendentincloud.it page. It does not access credentials, tokens, or personal data.
+- No analytics, telemetry, or tracking of any kind.
+- Zero runtime dependencies. No CDN, no external scripts.
+- Content Security Policy: `default-src 'none'; script-src 'self'`.
+- All message handlers validate the sender identity and origin before processing.
+- DOM manipulation uses `textContent` and `createElement` exclusively -- never `innerHTML`.
 
-## 🐛 Problemi noti
+For the full security design, see [SECURITY.md](SECURITY.md).
 
-- L'estensione funziona solo quando Chrome è aperto
-- Richiede che la pagina di dipendentincloud.it sia stata visitata almeno una volta
-- L'importazione automatica delle assenze funziona solo dalla dashboard (prossimi 7 giorni)
-- Le notifiche sonore richiedono che Chrome abbia i permessi audio
+## Requirements
 
-### Risoluzione problemi audio
+- Google Chrome 116+ or any Chromium-based browser (Edge, Brave, Opera, Vivaldi).
+- An active account on dipendentincloud.it.
 
-- **Il suono non si sente**: Verifica che "Abilita suoni" sia attivo, controlla il volume dello slider e del sistema
-- **Il suono è troppo forte/debole**: Regola lo slider del volume nelle opzioni (20-40% per uffici, 50-60% per home office)
-- **Preferisci solo notifiche visive**: Disabilita "Abilita suoni di notifica" nelle opzioni
+Permissions requested by the extension:
 
-## 🔒 Privacy e Sicurezza
+| Permission                           | Purpose                                                       |
+| ------------------------------------ | ------------------------------------------------------------- |
+| `storage`                            | Save your settings and clock status locally                   |
+| `notifications`                      | Send desktop reminders                                        |
+| `offscreen`                          | Play audio alerts in the background via Web Audio API         |
+| `alarms`                             | Schedule periodic checks that survive service worker restarts |
+| Host access to `dipendentincloud.it` | Read clock status from the page                               |
 
-- ✅ L'estensione legge solo informazioni pubbliche dalla pagina web
-- ✅ Non accede a credenziali o dati sensibili
-- ✅ Tutti i dati sono salvati localmente nel browser
-- ✅ Nessun dato viene inviato a server esterni
-- ✅ Codice open source verificabile
+## Contributing
 
-## 📋 Requisiti
+Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
-- Google Chrome o browser basato su Chromium
-- Accesso a dipendentincloud.it
-- Permessi richiesti:
-  - `activeTab` - Per leggere lo stato della timbratura
-  - `storage` - Per salvare le impostazioni
-  - `notifications` - Per le notifiche desktop
-  - `offscreen` - Per riprodurre i suoni di notifica
+## License
+
+This project is licensed under the [MIT License](LICENSE).
+
+Copyright (c) 2024-2026 Andrea Bonacci.
 
 ---
 
-**Nota**: Questa estensione è uno strumento di supporto. Verifica sempre le tue timbrature direttamente su Dipendenti in Cloud.
+If you find this extension useful, consider giving the repository a star. It helps others discover the project.
 
----
+**Disclaimer:** This is an independent tool. Always verify your attendance records directly on Dipendenti in Cloud.
 
-Sviluppato da **Andrea Bonacci**
+Developed by **Andrea Bonacci**.

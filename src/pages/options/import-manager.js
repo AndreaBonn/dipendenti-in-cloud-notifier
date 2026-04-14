@@ -3,6 +3,7 @@
  */
 
 import { showToast, showConfirm, isValidDate, sanitizeDescription } from './ui-helpers.js';
+import { isAllowedOrigin } from '../../shared/validation.js';
 import { renderFullDayExclusions } from './exclusion-manager.js';
 
 // In-memory store for pending absences (source of truth — DOM is display-only)
@@ -38,6 +39,12 @@ export function importAssenze() {
     }
 
     const tab = tabs[0];
+    if (!isAllowedOrigin(tab.url || '')) {
+      importButton.disabled = false;
+      importButton.textContent = '📥 Importa da Dipendenti in Cloud';
+      showToast('URL del tab non autorizzato', 'error');
+      return;
+    }
     chrome.tabs.sendMessage(tab.id, { action: 'extractAssenze' }, function (response) {
       importButton.disabled = false;
       importButton.textContent = '📥 Importa da Dipendenti in Cloud';
@@ -118,7 +125,8 @@ function showImportModal(assenze) {
 
         const tipoDiv = document.createElement('div');
         tipoDiv.className = 'assenza-tipo';
-        tipoDiv.textContent = assenza.descrizione + (isDuplicate ? ' (già presente)' : '');
+        tipoDiv.textContent =
+          sanitizeDescription(assenza.descrizione) + (isDuplicate ? ' (già presente)' : '');
 
         infoDiv.appendChild(dateDiv);
         infoDiv.appendChild(tipoDiv);

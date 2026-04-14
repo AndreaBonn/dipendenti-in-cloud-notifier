@@ -47,7 +47,7 @@ export function showConfirm(message) {
       cleanup(false);
     }
 
-    yesBtn.addEventListener('click', onYes);
-    noBtn.addEventListener('click', onNo);
+    yesBtn.addEventListener('click', onYes, { once: true });
+    noBtn.addEventListener('click', onNo, { once: true });
   });
 }

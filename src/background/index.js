@@ -228,7 +228,9 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     sendResponse({ success: true });
     return true;
   } else if (request.action === 'updateIcon') {
-    handleUpdateIcon(request.isTimbrato);
+    const raw = request.isTimbrato;
+    const isTimbrato = raw === true ? true : raw === false ? false : null;
+    handleUpdateIcon(isTimbrato);
   } else if (request.action === 'muteNotification') {
     const situationId = getCurrentSituationId();
     if (situationId) {
