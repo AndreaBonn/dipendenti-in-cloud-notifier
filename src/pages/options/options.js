@@ -63,8 +63,10 @@ function saveOptions() {
   const eveningEnd = document.getElementById('eveningEnd').value;
   const enableNotifications = document.getElementById('enableNotifications').checked;
   const enableSound = document.getElementById('enableSound').checked;
-  const soundType = document.getElementById('soundType').value;
-  const soundVolume = parseInt(document.getElementById('soundVolume').value, 10);
+  const rawSoundType = document.getElementById('soundType').value;
+  const soundType = VALID_SOUND_TYPES.includes(rawSoundType) ? rawSoundType : 'classic';
+  const rawVolume = parseInt(document.getElementById('soundVolume').value, 10);
+  const soundVolume = Number.isFinite(rawVolume) ? Math.max(0, Math.min(100, rawVolume)) : 50;
 
   // Validazione formato HH:MM
   const TIME_REGEX = /^([01]\d|2[0-3]):[0-5]\d$/;

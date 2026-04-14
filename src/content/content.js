@@ -186,7 +186,7 @@ function extractAssenze() {
 function checkTimbratura() {
   let isTimbrato = null; // Inizialmente null (stato non disponibile)
   let lastTimbratura = '';
-  let timbratureCount = 0;
+  let timbratureCount;
   let timbratureOggi = [];
 
   // Verifichiamo se siamo nella pagina di Dipendenti in Cloud
@@ -213,29 +213,12 @@ function checkTimbratura() {
       }
     });
 
-    // Strategia 2: Conta le timbrature di oggi
-    const timbratureElements = document.querySelectorAll(
-      '.timbratura, .sessione, [class*="timb"], [class*="punch"]'
-    );
-    log('[Timbratura] Trovati ' + timbratureElements.length + ' elementi timbratura');
-
-    // Strategia 3: Cerca nella tabella/lista delle timbrature
-    const today = new Date();
-    const todayStr = today.toLocaleDateString('it-IT');
-
-    timbratureElements.forEach((el) => {
-      const text = el.textContent;
-      if (text.includes(todayStr) || text.includes('oggi') || text.includes('Oggi')) {
-        // Conta quante volte appare un orario (formato HH:MM)
-        const timeMatches = text.match(/\d{1,2}:\d{2}/g);
-        if (timeMatches) {
-          timbratureCount = timeMatches.length;
-          if (timeMatches.length > 0) {
-            lastTimbratura = timeMatches[timeMatches.length - 1];
-          }
-        }
-      }
-    });
+    // Derive count and lastTimbratura from the already-extracted timbratureOggi
+    // (validated via TIME_FORMAT_STRICT, deduplicated, and sorted)
+    timbratureCount = timbratureOggi.length;
+    if (timbratureOggi.length > 0) {
+      lastTimbratura = timbratureOggi[timbratureOggi.length - 1];
+    }
 
     log('[Timbratura] Numero timbrature oggi: ' + timbratureCount);
 
