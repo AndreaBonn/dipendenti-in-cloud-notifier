@@ -4,7 +4,7 @@
   "version": "2.0.0",
   "description": "Estensione NON UFFICIALE per ricordare di timbrare su dipendentincloud.it. Notifiche, countdown e timbratura rapida.",
   "author": "Andrea Bonacci",
-  "homepage_url": "https://github.com/AndreaBonn/PRIVATE__EstensioneChrome_DipendentiInCloud",
+  "homepage_url": "https://github.com/AndreaBonn/dipendenti-in-cloud-notifier",
   "action": {
     "default_popup": "src/pages/popup/popup.html",
     "default_icon": {
