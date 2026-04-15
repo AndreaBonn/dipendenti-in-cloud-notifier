@@ -4,7 +4,7 @@
 >
 > [Contributing](CONTRIBUTING.md) | [Security](SECURITY.md) | [Changelog](CHANGELOG.md)
 
-![CI](https://github.com/AndreaBonn/PRIVATE__EstensioneChrome_DipendentiInCloud/actions/workflows/ci.yml/badge.svg)
+![CI](https://github.com/AndreaBonn/dipendenti-in-cloud-notifier/actions/workflows/ci.yml/badge.svg)
 ![Chrome MV3](https://img.shields.io/badge/Chrome-Manifest_V3-4285F4?logo=googlechrome&logoColor=white)
 ![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)
 ![Version](https://img.shields.io/badge/version-2.0.0-blue)
