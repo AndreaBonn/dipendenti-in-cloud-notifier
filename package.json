@@ -35,6 +35,7 @@
   "homepage": "https://github.com/AndreaBonn/dipendenti-in-cloud-notifier#readme",
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@vitest/coverage-v8": "^4.1.5",
     "eslint": "^10.2.0",
     "globals": "^17.5.0",
     "prettier": "^3.8.2",
