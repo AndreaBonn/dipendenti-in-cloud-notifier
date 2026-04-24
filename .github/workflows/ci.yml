@@ -22,6 +22,7 @@ jobs:
       - run: npm run format:check
 
       - name: Run tests with JUnit reporter
+        if: always()
         run: npx vitest run --reporter=default --reporter=junit --outputFile.junit=test-results.xml
 
       - name: Run tests with coverage

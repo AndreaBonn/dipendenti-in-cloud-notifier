@@ -36,9 +36,7 @@ describe('sendToOffscreen', () => {
 
   it('passes correct document options when creating offscreen document', async () => {
     chrome.offscreen.hasDocument = vi.fn().mockResolvedValue(false);
-    const createSpy = vi
-      .spyOn(chrome.offscreen, 'createDocument')
-      .mockResolvedValue(undefined);
+    const createSpy = vi.spyOn(chrome.offscreen, 'createDocument').mockResolvedValue(undefined);
     vi.useFakeTimers();
 
     sendToOffscreen({ action: 'test' });

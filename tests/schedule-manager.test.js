@@ -44,9 +44,8 @@ describe('loadWorkSchedule', () => {
       eveningEnd: '17:00',
     });
 
-    const { loadWorkSchedule, getWorkSchedule } = await import(
-      '../src/background/schedule-manager.js'
-    );
+    const { loadWorkSchedule, getWorkSchedule } =
+      await import('../src/background/schedule-manager.js');
 
     const callback = vi.fn();
     loadWorkSchedule(callback);
@@ -68,9 +67,8 @@ describe('loadWorkSchedule', () => {
       eveningEnd: '18:00',
     });
 
-    const { loadWorkSchedule, getWorkSchedule } = await import(
-      '../src/background/schedule-manager.js'
-    );
+    const { loadWorkSchedule, getWorkSchedule } =
+      await import('../src/background/schedule-manager.js');
 
     const callback = vi.fn();
     loadWorkSchedule(callback);
