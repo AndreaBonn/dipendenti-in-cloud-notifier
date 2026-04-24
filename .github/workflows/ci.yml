@@ -24,6 +24,10 @@ jobs:
       - name: Run tests with JUnit reporter
         run: npx vitest run --reporter=default --reporter=junit --outputFile.junit=test-results.xml
 
+      - name: Run tests with coverage
+        if: always()
+        run: npx vitest run --coverage
+
       - name: Generate test badge
         if: always()
         run: |
@@ -45,13 +49,38 @@ jobs:
               json.dump(badge, f)
           "
 
-      - name: Commit badge
+      - name: Generate coverage badge
+        if: always()
+        run: |
+          python3 -c "
+          import json, os
+          summary_path = 'coverage/coverage-summary.json'
+          if not os.path.exists(summary_path):
+              badge = {'schemaVersion': 1, 'label': 'coverage', 'message': 'N/A', 'color': 'lightgrey'}
+          else:
+              with open(summary_path) as f:
+                  data = json.load(f)
+              pct = data['total']['lines']['pct']
+              if pct >= 90:
+                  color = 'brightgreen'
+              elif pct >= 80:
+                  color = 'green'
+              elif pct >= 60:
+                  color = 'yellow'
+              else:
+                  color = 'red'
+              badge = {'schemaVersion': 1, 'label': 'coverage', 'message': f'{pct}%', 'color': color}
+          with open('badges/coverage-badge.json', 'w') as f:
+              json.dump(badge, f)
+          "
+
+      - name: Commit badges
         if: always() && github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add badges/test-badge.json
-          git diff --cached --quiet || git commit -m "ci: update test badge [skip ci]"
+          git add badges/test-badge.json badges/coverage-badge.json
+          git diff --cached --quiet || git commit -m "ci: update badges [skip ci]"
           git push
 
   validate-manifest:

@@ -5,6 +5,7 @@ export default defineConfig({
     include: ['tests/**/*.test.js'],
     coverage: {
       provider: 'v8',
+      reporter: ['text', 'json-summary'],
       include: [
         'src/time-utils.js',
         'src/shared/validation.js',

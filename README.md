@@ -8,6 +8,7 @@
 
 [![CI](https://github.com/AndreaBonn/dipendenti-in-cloud-notifier/actions/workflows/ci.yml/badge.svg)](https://github.com/AndreaBonn/dipendenti-in-cloud-notifier/actions/workflows/ci.yml)
 [![Tests](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/AndreaBonn/dipendenti-in-cloud-notifier/main/badges/test-badge.json)](https://github.com/AndreaBonn/dipendenti-in-cloud-notifier/actions/workflows/ci.yml)
+[![Coverage](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/AndreaBonn/dipendenti-in-cloud-notifier/main/badges/coverage-badge.json)](https://github.com/AndreaBonn/dipendenti-in-cloud-notifier/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Security Policy](https://img.shields.io/badge/security-policy-blueviolet.svg)](SECURITY.md)
 <br>
