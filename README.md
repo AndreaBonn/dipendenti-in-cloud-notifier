@@ -10,6 +10,7 @@
 [![Tests](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/AndreaBonn/dipendenti-in-cloud-notifier/main/badges/test-badge.json)](https://github.com/AndreaBonn/dipendenti-in-cloud-notifier/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Security Policy](https://img.shields.io/badge/security-policy-blueviolet.svg)](SECURITY.md)
+<br>
 ![Chrome MV3](https://img.shields.io/badge/Chrome-Manifest_V3-4285F4?logo=googlechrome&logoColor=white)
 ![Version](https://img.shields.io/badge/version-2.0.0-blue)
 ![Zero Dependencies](https://img.shields.io/badge/runtime_deps-0-brightgreen)
