@@ -34,6 +34,8 @@
   },
   "homepage": "https://github.com/AndreaBonn/dipendenti-in-cloud-notifier#readme",
   "devDependencies": {
+    "@emnapi/core": "^1.10.0",
+    "@emnapi/runtime": "^1.10.0",
     "@eslint/js": "^10.0.1",
     "@vitest/coverage-v8": "^4.1.5",
     "eslint": "^10.2.0",
