@@ -4,11 +4,19 @@
 >
 > [Contribuire](CONTRIBUTING.it.md) | [Sicurezza](SECURITY.it.md) | [Changelog](CHANGELOG.md)
 
-![CI](https://github.com/AndreaBonn/dipendenti-in-cloud-notifier/actions/workflows/ci.yml/badge.svg)
+<div align="center">
+
+[![CI](https://github.com/AndreaBonn/dipendenti-in-cloud-notifier/actions/workflows/ci.yml/badge.svg)](https://github.com/AndreaBonn/dipendenti-in-cloud-notifier/actions/workflows/ci.yml)
+[![Tests](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/AndreaBonn/dipendenti-in-cloud-notifier/main/badges/test-badge.json)](https://github.com/AndreaBonn/dipendenti-in-cloud-notifier/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Security Policy](https://img.shields.io/badge/security-policy-blueviolet.svg)](SECURITY.it.md)
 ![Chrome MV3](https://img.shields.io/badge/Chrome-Manifest_V3-4285F4?logo=googlechrome&logoColor=white)
-![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)
 ![Version](https://img.shields.io/badge/version-2.0.0-blue)
 ![Zero Dependencies](https://img.shields.io/badge/runtime_deps-0-brightgreen)
+[![ESLint](https://img.shields.io/badge/linter-ESLint-4B32C3?logo=eslint&logoColor=white)](https://eslint.org/)
+[![Prettier](https://img.shields.io/badge/formatter-Prettier-F7B93E?logo=prettier&logoColor=black)](https://prettier.io/)
+
+</div>
 
 Estensione Chrome che ti ricorda di timbrare su [dipendentincloud.it](https://www.dipendentincloud.it).
 

@@ -43,6 +43,7 @@ build/
 coverage/
 .nyc_output/
 *.test.js.snap
+test-results.xml
 
 # OS specifici
 .DS_Store
