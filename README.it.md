@@ -22,6 +22,10 @@
 
 Estensione Chrome che ti ricorda di timbrare su [dipendentincloud.it](https://www.dipendentincloud.it).
 
+<div align="center">
+<img src="./assets/popup-not-clocked-in.png" alt="Popup dell'estensione con promemoria urgente di timbratura e storico completo" width="320">
+</div>
+
 ## Disclaimer
 
 Questa estensione **non è ufficiale** e **non è affiliata** in alcun modo con Dipendenti in Cloud o dipendentincloud.it.
@@ -71,6 +75,10 @@ Clicca sull'icona dell'estensione per aprire il popup, che mostra:
 - Pulsante per aprire Dipendenti in Cloud direttamente.
 - Pulsante per silenziare il ciclo di notifiche corrente.
 
+<div align="center">
+<img src="./assets/popup-clocked-in.png" alt="Popup con stato timbrato, countdown e storico timbrature" width="320">
+</div>
+
 ### Notifiche
 
 Quando è ora di timbrare, l'estensione invia:
@@ -117,6 +125,10 @@ Evita le notifiche nei giorni in cui non lavori:
 - **Mezze giornate escluse** -- indica una mattina o un pomeriggio libero (es. visita medica).
 - **Importazione automatica** -- importa le assenze programmate direttamente dalla dashboard di Dipendenti in Cloud (prossimi 7 giorni).
 
+<div align="center">
+<img src="./assets/options-exclusions.png" alt="Configurazione esclusioni con ferie e permessi mezza giornata" width="480">
+</div>
+
 ### Notifiche e Suoni
 
 - Abilita o disabilita le notifiche desktop indipendentemente dagli avvisi sonori.
@@ -126,6 +138,10 @@ Evita le notifiche nei giorni in cui non lavori:
 ### Generali
 
 - **Apertura automatica** -- apre automaticamente Dipendenti in Cloud all'avvio di Chrome durante l'orario lavorativo (opzionale).
+
+<div align="center">
+<img src="./assets/options-schedule-notifications.png" alt="Pagina opzioni con orari di lavoro, notifiche e impostazioni suono" width="480">
+</div>
 
 ## Risoluzione Problemi
 

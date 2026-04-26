@@ -22,6 +22,10 @@
 
 A Chrome extension that reminds you to clock in and out on [dipendentincloud.it](https://www.dipendentincloud.it).
 
+<div align="center">
+<img src="./assets/popup-not-clocked-in.png" alt="Extension popup showing urgent clock-in reminder with full punch history" width="320">
+</div>
+
 ## Disclaimer
 
 This extension is **not official** and is **not affiliated** with Dipendenti in Cloud or dipendentincloud.it in any way.
@@ -71,6 +75,10 @@ Click the extension icon to open the popup, which displays:
 - A button to open Dipendenti in Cloud directly.
 - A mute button to silence the current notification cycle.
 
+<div align="center">
+<img src="./assets/popup-clocked-in.png" alt="Popup showing clocked-in status with countdown and punch history" width="320">
+</div>
+
 ### Notifications
 
 When it is time to clock in or out, the extension sends:
@@ -117,6 +125,10 @@ Prevent notifications on days you are not working:
 - **Half-day exclusions** -- mark a morning or afternoon as off (e.g., a medical appointment).
 - **Auto-import** -- import upcoming absences directly from the Dipendenti in Cloud dashboard (next 7 days).
 
+<div align="center">
+<img src="./assets/options-exclusions.png" alt="Exclusions configuration with holidays and half-day permits" width="480">
+</div>
+
 ### Notifications and Sound
 
 - Enable or disable desktop notifications independently from sound alerts.
@@ -126,6 +138,10 @@ Prevent notifications on days you are not working:
 ### General
 
 - **Auto-open** -- automatically open Dipendenti in Cloud when Chrome starts during work hours (optional).
+
+<div align="center">
+<img src="./assets/options-schedule-notifications.png" alt="Options page showing work schedule, notification and sound settings" width="480">
+</div>
 
 ## Troubleshooting
 
