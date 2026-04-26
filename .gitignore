@@ -58,6 +58,7 @@ Desktop.ini
 $RECYCLE.BIN/
 
 # Documentazione privata
+docs/
 NOTES.md
 TODO_PRIVATE.md
 INTERNAL_*.md
