@@ -219,6 +219,7 @@ describe('sendStartupNotification', () => {
     const createSpy = vi.spyOn(chrome.notifications, 'create');
 
     // 10:00 = 600 min — morningStart(540) ≤ 600 < lunchEnd(780), isTimbrato=false → 'morning'
+    vi.setSystemTime(new Date('2024-06-10T10:00:00'));
     sendStartupNotification(false, DEFAULT_SCHEDULE);
 
     // Notification should be called with urgent=true options
