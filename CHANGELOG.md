@@ -3,9 +3,11 @@
 > Initial release of the Chrome extension for dipendentincloud.it time tracking reminders.
 
 ### ✨ New Features
+
 - Initial release v2.0 - Chrome extension for dipendentincloud.it time tracking reminders (face46e)
 
 ### 🐛 Bug Fixes
+
 - Harden input validation, reduce permissions (#5)
 - Audit hardening, silent failure fixes, and 64 new tests (#4)
 - Harden reliability, expand test coverage, reorganize repo (#3)
@@ -30,6 +32,7 @@
 - Replace innerHTML with safe DOM APIs to prevent XSS (804bf3e)
 
 ### 📚 Documentation
+
 - Add UI screenshots for popup and options pages (b385f03)
 - Rewrite documentation with bilingual EN/IT and cross-navigation (2a4f56f)
 - Add code review report with security audit findings (86fbe85)
@@ -39,6 +42,7 @@
 - Add MIT license (18a202a)
 
 ### 🔧 Maintenance
+
 - Update repository URLs to new public name (#6)
 - Update badges [skip ci] (8f5bea3)
 - Update badges [skip ci] (0770e0a)
@@ -58,6 +62,7 @@
 - Remove commercial/marketing docs from repository (7ce8b5d)
 
 ### Other
+
 - Add 96 tests for all background modules (196→292) (2946767)
 - Improve badge layout with 4+5 row split (eb001ed)
 - Fix Prettier formatting in Italian docs (e31dab3)
