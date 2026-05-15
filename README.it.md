@@ -52,6 +52,47 @@ Per aggiornare, scarica le ultime modifiche e clicca il pulsante di ricaricament
 
 ## Come Funziona
 
+```mermaid
+%%{init: {'theme': 'default'}}%%
+graph LR
+  site["dipendentincloud.it"]
+  content["Content Script<br/>Lettura DOM"]
+  storage[("chrome.storage.local")]
+  background["Service Worker<br/>Orchestratore"]
+  popup["Popup<br/>Stato + Countdown"]
+  options["Opzioni<br/>Impostazioni"]
+  offscreen["Offscreen Doc<br/>Web Audio API"]
+  notif["Notifiche Chrome"]
+  alarms["Chrome Alarms<br/>30s + 60s"]
+
+  site --> content
+  content -->|"timbratureStatus"| storage
+  content -->|"updateIcon"| background
+  background --> storage
+  background -->|"playSound"| offscreen
+  background --> notif
+  alarms -->|"statusCheck / badgeUpdate"| background
+  popup -->|"leggi stato"| storage
+  popup -.->|"getStatus"| content
+  popup -->|"muteNotification"| background
+  options -->|"leggi/scrivi impostazioni"| storage
+  options -->|"testSound"| background
+  options -.->|"extractAssenze"| content
+
+  classDef core fill:#2563eb,stroke:#1d4ed8,color:#fff
+  classDef data fill:#d97706,stroke:#b45309,color:#fff
+  classDef ext fill:#6b7280,stroke:#4b5563,color:#fff
+  classDef engine fill:#059669,stroke:#047857,color:#fff
+
+  class background,alarms core
+  class storage data
+  class site,notif ext
+  class content,offscreen engine
+  class popup,options core
+```
+
+Per la documentazione architetturale dettagliata, vedi [docs/ARCHITECTURE.it.md](docs/ARCHITECTURE.it.md).
+
 ### Stati dell'Icona
 
 L'icona dell'estensione nella toolbar di Chrome riflette il tuo stato attuale:
